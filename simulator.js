@@ -1058,19 +1058,22 @@ class AutomataSimulator {
                 this.resetSimulation();
             }
             
+            // Prevent multiple clicks during animation
+            if (this.activeAnimations.length > 0) {
+                return;
+            }
+            
             // Set step mode instead of simulation running
             this.stepMode = true;
             this.simulationRunning = false;
             
-            // Disable step button until current animation completes
+            // Disable both step and run buttons until animation completes
             document.getElementById('step-simulation').disabled = true;
+            document.getElementById('run-simulation').disabled = true;
             
             // Update UI to show step mode
             document.getElementById('simulation-status').textContent = 
                 `Step Mode - Processing step ${this.simulationStep + 1}`;
-            
-            // Disable run button during step mode
-            document.getElementById('run-simulation').disabled = true;
             
             this.processNextInput();
         } catch (error) {
@@ -1088,6 +1091,12 @@ class AutomataSimulator {
                 this.simulationStep++;
             }
             
+            // Clear any completed animations
+            this.activeAnimations = this.activeAnimations.filter(anim => {
+                const time = Date.now();
+                return anim.update(time);
+            });
+            
             if (this.automaton.type === 'fa') {
                 this.processFiniteAutomaton();
             } else if (this.automaton.type === 'pda') {
@@ -1100,7 +1109,8 @@ class AutomataSimulator {
             document.getElementById('simulation-status').textContent = `Error: ${error.message}`;
             this.simulationRunning = false;
             this.stepMode = false;
-            // Re-enable run button on error
+            // Re-enable buttons on error
+            document.getElementById('step-simulation').disabled = false;
             document.getElementById('run-simulation').disabled = false;
         }
     }
@@ -1144,6 +1154,8 @@ class AutomataSimulator {
     }
     
     animateDataPacket(packet, points, duration, onComplete) {
+        const self = this;  // Store reference to this
+        
         // Create new animation
         const animation = {
             packet: packet,
@@ -1152,9 +1164,16 @@ class AutomataSimulator {
             duration: duration,
             onComplete: () => {
                 // Re-enable step button after animation completes
-                if (this.stepMode) {
+                if (self.stepMode) {
                     document.getElementById('step-simulation').disabled = false;
                 }
+                
+                // Remove this animation from active animations
+                const index = self.activeAnimations.indexOf(animation);
+                if (index > -1) {
+                    self.activeAnimations.splice(index, 1);
+                }
+                
                 // Call the original onComplete callback
                 if (onComplete) onComplete();
             },
