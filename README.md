@@ -169,7 +169,3 @@ See the [LICENSE](LICENSE) file for details.
 ---
 
 **Crafted with ❤️ for curious minds and future computer scientists.**
-
----
-
-Let me know if you’d like a `README.md` file version or a Turkish translation.
