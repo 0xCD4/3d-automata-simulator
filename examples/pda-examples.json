@@ -1,0 +1,32 @@
+{
+    "palindrome": {
+      "type": "pda",
+      "states": [
+        { "name": "q0", "initial": true, "final": false },
+        { "name": "q1", "initial": false, "final": false },
+        { "name": "q2", "initial": false, "final": true }
+      ],
+      "transitions": [
+        { "from": "q0", "to": "q0", "input": "a,ε→a" },
+        { "from": "q0", "to": "q0", "input": "b,ε→b" },
+        { "from": "q0", "to": "q1", "input": "ε,ε→ε" },
+        { "from": "q1", "to": "q1", "input": "a,a→ε" },
+        { "from": "q1", "to": "q1", "input": "b,b→ε" },
+        { "from": "q1", "to": "q2", "input": "ε,ε→ε" }
+      ]
+    },
+    "anbn": {
+      "type": "pda",
+      "states": [
+        { "name": "q0", "initial": true, "final": false },
+        { "name": "q1", "initial": false, "final": false },
+        { "name": "q2", "initial": false, "final": true }
+      ],
+      "transitions": [
+        { "from": "q0", "to": "q1", "input": "a,ε→X" },
+        { "from": "q1", "to": "q1", "input": "a,ε→X" },
+        { "from": "q1", "to": "q2", "input": "b,X→ε" },
+        { "from": "q2", "to": "q2", "input": "b,X→ε" }
+      ]
+    }
+  }

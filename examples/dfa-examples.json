@@ -1,0 +1,28 @@
+{
+    "endsWith_a": {
+      "type": "fa",
+      "states": [
+        { "name": "q0", "initial": true, "final": false },
+        { "name": "q1", "initial": false, "final": true }
+      ],
+      "transitions": [
+        { "from": "q0", "to": "q0", "input": "b" },
+        { "from": "q0", "to": "q1", "input": "a" },
+        { "from": "q1", "to": "q0", "input": "b" },
+        { "from": "q1", "to": "q1", "input": "a" }
+      ]
+    },
+    "evenAs": {
+      "type": "fa",
+      "states": [
+        { "name": "even", "initial": true, "final": true },
+        { "name": "odd", "initial": false, "final": false }
+      ],
+      "transitions": [
+        { "from": "even", "to": "odd", "input": "a" },
+        { "from": "even", "to": "even", "input": "b" },
+        { "from": "odd", "to": "even", "input": "a" },
+        { "from": "odd", "to": "odd", "input": "b" }
+      ]
+    }
+  }

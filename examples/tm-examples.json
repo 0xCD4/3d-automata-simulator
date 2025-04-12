@@ -1,0 +1,18 @@
+{
+    "binaryAdd": {
+      "type": "tm",
+      "states": [
+        { "name": "q0", "initial": true, "final": false },
+        { "name": "q1", "initial": false, "final": false },
+        { "name": "q2", "initial": false, "final": true }
+      ],
+      "transitions": [
+        { "from": "q0", "to": "q0", "input": "1→1,R" },
+        { "from": "q0", "to": "q0", "input": "0→0,R" },
+        { "from": "q0", "to": "q1", "input": "_→_,L" },
+        { "from": "q1", "to": "q1", "input": "1→0,L" },
+        { "from": "q1", "to": "q2", "input": "0→1,R" },
+        { "from": "q1", "to": "q2", "input": "_→1,R" }
+      ]
+    }
+  }
