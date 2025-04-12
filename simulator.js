@@ -1163,15 +1163,15 @@ class AutomataSimulator {
             startTime: Date.now(),
             duration: duration,
             onComplete: () => {
-                // Re-enable step button after animation completes
-                if (self.stepMode) {
-                    document.getElementById('step-simulation').disabled = false;
-                }
-                
                 // Remove this animation from active animations
                 const index = self.activeAnimations.indexOf(animation);
                 if (index > -1) {
                     self.activeAnimations.splice(index, 1);
+                }
+                
+                // Re-enable step button after animation completes if we're not at the end
+                if (self.stepMode && self.inputIndex < self.inputString.length) {
+                    document.getElementById('step-simulation').disabled = false;
                 }
                 
                 // Call the original onComplete callback
@@ -1238,7 +1238,7 @@ class AutomataSimulator {
         
         const currentInput = this.inputString[this.inputIndex];
         document.getElementById('simulation-status').textContent = 
-            `Processing: "${currentInput}" (${this.inputIndex + 1}/${this.inputString.length})`;
+            `Step Mode - Processing "${currentInput}" (${this.inputIndex + 1}/${this.inputString.length})`;
         
         // Find valid transition
         const transition = this.automaton.transitions.find(t => 
@@ -1258,6 +1258,10 @@ class AutomataSimulator {
             
             this.simulationRunning = false;
             this.stepMode = false;
+            
+            // Re-enable buttons when rejected
+            document.getElementById('step-simulation').disabled = false;
+            document.getElementById('run-simulation').disabled = false;
             return;
         }
         
