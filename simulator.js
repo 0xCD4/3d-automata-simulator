@@ -1020,6 +1020,9 @@ class AutomataSimulator {
             this.inputString = document.getElementById('input-string').value;
             this.inputIndex = 0;
             
+            // Re-enable run button
+            document.getElementById('run-simulation').disabled = false;
+            
             // Reset stack for PDA
             this.stack = [];
             document.getElementById('simulation-stack').textContent = 'Stack: []';
@@ -1059,6 +1062,13 @@ class AutomataSimulator {
             this.stepMode = true;
             this.simulationRunning = false;
             
+            // Update UI to show step mode
+            document.getElementById('simulation-status').textContent = 
+                `Step Mode - Processing step ${this.simulationStep + 1}`;
+            
+            // Disable run button during step mode
+            document.getElementById('run-simulation').disabled = true;
+            
             this.processNextInput();
         } catch (error) {
             console.error("Error stepping simulation:", error);
@@ -1068,6 +1078,10 @@ class AutomataSimulator {
     
     processNextInput() {
         try {
+            if (this.stepMode) {
+                this.simulationStep++;
+            }
+            
             if (this.automaton.type === 'fa') {
                 this.processFiniteAutomaton();
             } else if (this.automaton.type === 'pda') {
@@ -1080,6 +1094,8 @@ class AutomataSimulator {
             document.getElementById('simulation-status').textContent = `Error: ${error.message}`;
             this.simulationRunning = false;
             this.stepMode = false;
+            // Re-enable run button on error
+            document.getElementById('run-simulation').disabled = false;
         }
     }
     
