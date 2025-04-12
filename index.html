@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Automata Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div>Loading Automata Simulator...</div>
+    </div>
+
+    <div id="canvas-container"></div>
+    
+    <button id="controls-toggle">Show Controls</button>
+    
+    <div id="legend">
+        <div class="legend-item"><div class="legend-color" style="background-color: #2196F3;"></div>Initial State</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #4CAF50;"></div>Final State</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #FFC107;"></div>Current State</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #FF5252;"></div>Error/Rejection</div>
+    </div>
+    
+    <div id="top-buttons">
+        <button id="show-examples" class="primary">Example Automata</button>
+        <button id="show-tutorial">How It Works</button>
+    </div>
+    
+    <div id="examples-panel" class="panel">
+        <h3>Example Automata</h3>
+        <div class="example-automaton" data-example="ends-with-a">
+            <strong>DFA: Strings ending with 'a'</strong>
+            <div class="description">Language: {w | w ends with 'a'}</div>
+        </div>
+        <div class="example-automaton" data-example="even-a">
+            <strong>DFA: Even number of 'a's</strong>
+            <div class="description">Language: {w | w contains an even number of 'a's}</div>
+        </div>
+        <div class="example-automaton" data-example="starts-with-ab">
+            <strong>DFA: Strings starting with 'ab'</strong>
+            <div class="description">Language: {w | w starts with "ab"}</div>
+        </div>
+        <div class="example-automaton" data-example="palindrome">
+            <strong>PDA: Palindromes</strong>
+            <div class="description">Language: {w | w is a palindrome over {a,b}}</div>
+        </div>
+        <div class="example-automaton" data-example="anbn">
+            <strong>PDA: a^n b^n</strong>
+            <div class="description">Language: {a^n b^n | n ≥ 1}</div>
+        </div>
+        <div class="example-automaton" data-example="tm-binary-add">
+            <strong>TM: Binary Increment</strong>
+            <div class="description">Adds 1 to a binary number</div>
+        </div>
+    </div>
+    
+    <div id="tutorial-panel" class="panel">
+        <h2>How Automata Work</h2>
+        
+        <div class="tutorial-step" id="step1">
+            <h3>Step 1: Understanding States</h3>
+            <p>In automata theory, <strong>states</strong> represent the "memory" of the machine. Each state remembers something about the input processed so far.</p>
+            <ul>
+                <li><span style="color: #2196F3;">Blue spheres</span> are initial states, where processing begins</li>
+                <li><span style="color: #4CAF50;">Green spheres</span> are final/accepting states</li>
+                <li><span style="color: #E0E0E0;">White spheres</span> are regular (non-accepting) states</li>
+            </ul>
+        </div>
+        
+        <div class="tutorial-step" id="step2" style="display: none;">
+            <h3>Step 2: Transitions and Inputs</h3>
+            <p>Transitions are the arrows between states. They define how the automaton moves from one state to another when reading input.</p>
+            <p>During simulation, a <strong>data packet</strong> (glowing sphere) visually represents the input symbol being processed as it moves along transitions.</p>
+            <p>When a state receives a packet, it processes the input and determines the next state based on its transition rules.</p>
+        </div>
+        
+        <div class="tutorial-step" id="step3" style="display: none;">
+            <h3>Step 3: Types of Automata</h3>
+            <p><strong>Finite Automata (FA):</strong> The simplest form, with no memory beyond the current state.</p>
+            <p><strong>Pushdown Automata (PDA):</strong> Adds a stack memory, allowing it to recognize nested structures.</p>
+            <p><strong>Turing Machines (TM):</strong> Most powerful, with an infinite tape that can be read from and written to.</p>
+        </div>
+        
+        <div class="tutorial-step" id="step4" style="display: none;">
+            <h3>Step 4: Simulation Process</h3>
+            <p>During simulation:</p>
+            <ol>
+                <li>The automaton starts in the initial state (blue)</li>
+                <li>For each input symbol, a data packet travels along the matching transition</li>
+                <li>The current state is highlighted in yellow</li>
+                <li>If no transition exists for the current input, the state turns red (rejection)</li>
+                <li>After all input is processed, acceptance depends on whether the final state is an accepting state</li>
+            </ol>
+        </div>
+        
+        <div class="tutorial-controls">
+            <button class="prev-step" style="visibility: hidden;">Previous</button>
+            <button class="next-step">Next</button>
+        </div>
+    </div>
+    
+    <div id="controls" class="panel">
+        <h2>3D Automata Simulator</h2>
+        <select id="automaton-type">
+            <option value="fa">Finite Automaton (FA)</option>
+            <option value="pda">Pushdown Automaton (PDA)</option>
+            <option value="tm">Turing Machine (TM)</option>
+        </select>
+        
+        <h3>States</h3>
+        <div id="states-container">
+            <div class="state">
+                <input type="text" placeholder="State name" value="q0">
+                <label><input type="checkbox" checked> Initial</label>
+                <label><input type="checkbox"> Final</label>
+                <button class="add-state">+</button>
+            </div>
+        </div>
+        
+        <h3>Transitions</h3>
+        <div id="transitions-container">
+            <div class="transition">
+                <select class="from-state">
+                    <option value="q0">q0</option>
+                </select>
+                <input type="text" class="input-symbol" placeholder="Input" value="a">
+                <select class="to-state">
+                    <option value="q0">q0</option>
+                </select>
+                <button class="add-transition">+</button>
+            </div>
+        </div>
+        
+        <div id="pda-controls" style="display: none;">
+            <h3>Stack Operations</h3>
+            <div class="info-box">
+                <p>For PDA transitions, use notation:</p>
+                <ul>
+                    <li><code>a,X→Y</code>: Read 'a', pop 'X', push 'Y'</li>
+                    <li><code>a,ε→X</code>: Read 'a', push 'X' (no pop)</li>
+                    <li><code>a,X→ε</code>: Read 'a', pop 'X' (no push)</li>
+                    <li><code>ε,ε→ε</code>: Epsilon transition (no input, no stack op)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div id="tm-controls" style="display: none;">
+            <h3>Tape Operations</h3>
+            <div class="info-box">
+                <p>For TM transitions, use notation:</p>
+                <ul>
+                    <li><code>a→b,R</code>: Read 'a', write 'b', move right</li>
+                    <li><code>a→b,L</code>: Read 'a', write 'b', move left</li>
+                    <li><code>a→a,S</code>: Read 'a', write 'a', stay in place</li>
+                    <li>Use '_' for blank symbol</li>
+                </ul>
+            </div>
+        </div>
+        
+        <button id="create-automaton" class="primary">Create Automaton</button>
+        <button id="toggle-controls">Hide Controls</button>
+    </div>
+    
+    <div id="input-panel" class="panel">
+        <input type="text" id="input-string" placeholder="Input string" value="aabba">
+        <button id="run-simulation" class="primary">Run</button>
+        <button id="step-simulation">Step</button>
+        <button id="reset-simulation">Reset</button>
+        <div id="animation-speed">
+            <label for="speed-slider">Speed:</label>
+            <input type="range" id="speed-slider" min="1" max="5" value="3">
+        </div>
+        <div id="simulation-status">Ready</div>
+        <div id="simulation-info"></div>
+        <div id="simulation-stack" style="display: none;">Stack: []</div>
+        <div id="simulation-tape" style="display: none;">Tape: []</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="simulator.js"></script>
+</body>
+</html>
