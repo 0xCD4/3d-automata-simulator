@@ -1,164 +1,175 @@
-# 3D Automata Simulator
 
-An interactive 3D visualization tool for formal language theory and automata. Built for students, educators, and enthusiasts of theoretical computer science.
+# 🚀 3D Automata Simulator
 
-[🔗 **Live Demo**](#) *(Insert actual link here)*
+**An interactive 3D visualization tool for exploring formal language theory and automata.**  
+Designed for students, educators, and theoretical computer science enthusiasts.
 
----
-
-## 🎯 Overview
-
-**3D Automata Simulator** provides an intuitive, visual platform to explore and understand core concepts in automata theory. By simulating Finite Automata (FA), Pushdown Automata (PDA), and Turing Machines (TM) in a 3D interactive environment, the tool bridges the gap between abstract formalism and visual intuition.
+[🔗 **Live Demo**](https://github.com/user-attachments/assets/4be34ab7-c98d-405e-b513-4dad9c99c880)  
+*(View the simulator in action)*
 
 ---
 
-## 🚀 Features
+## 📌 What Is This?
 
-### 🔄 Automata Types Supported
-- **Finite Automata (FA)**
-- **Pushdown Automata (PDA)**
-- **Turing Machines (TM)**
+**3D Automata Simulator** offers a hands-on, visual approach to learning the foundations of automata theory.  
+It allows users to design, simulate, and analyze:
 
-### 🧠 Visual Components
-- Real-time **3D representation** of states and transitions
-- **Animated input processing** with data packet visualization
-- **Color-coded states**: Initial, Final, and Current
-- **Interactive camera controls**: rotate, pan, zoom
+- Finite Automata (FA)
+- Pushdown Automata (PDA)
+- Turing Machines (TM)
 
-### 🕹️ Simulation Options
-- **Step-by-step** or **automatic** simulation
-- Instant **acceptance/rejection feedback**
-- **Speed adjustment** for animations
-- **Stack visualization** for PDAs
-- **Tape visualization** for Turing Machines
+in a fully interactive 3D environment powered by **Three.js**.
 
-### 🧩 User Interface
-- Intuitive tools to **create states and transitions**
-- Built-in **example library** of common automata
-- Integrated **tutorials and explanations**
+---
+
+## 🎯 Key Features
+
+### 🧠 Supported Automata Types
+- ✅ **Finite Automata (FA)**
+- ✅ **Pushdown Automata (PDA)**
+- ✅ **Turing Machines (TM)**
+
+### 🔍 Visual Experience
+- Dynamic **3D state and transition rendering**
+- **Animated tokens** for real-time input processing
+- **Color-coded state indicators** (initial, final, current)
+- Smooth camera **rotation, panning, and zooming**
+
+### ⚙️ Simulation Mechanics
+- **Step-by-step** or **automated** simulation modes
+- **Acceptance/rejection** status visualization
+- **Animation speed control**
+- **Stack rendering** for PDA
+- **Tape visualization** for TM
+
+### 🧰 User Interaction
+- Simple UI to **create and edit automata**
+- **Example library** with classic problems
+- Embedded **educational content** and walkthroughs
 
 ---
 
 ## 🧪 How to Use
 
-### 📷 Basic Controls
-- **Rotate camera**: Click and drag
-- **Zoom**: Use scroll wheel
-- **Create Automaton**: Add states/transitions and click "Create Automaton"
-- **Simulate Input**: Enter string and click "Run" or "Step"
+### 🎮 Controls
+- **Rotate camera**: Click & drag
+- **Zoom**: Scroll
+- **Pan**: Right-click drag
+- **Run/Step**: Execute simulation
 
-### 🛠️ Creating Automata
+### 🛠 Building Automata
 
-#### Finite Automata (FA)
-- Add states, mark initial/final states
-- Define transitions using input symbols
+**For FA:**
+- Add states → Mark initial/final → Define transitions (e.g., `a`)
 
-#### Pushdown Automata (PDA)
-- Use transition format: `a,X→Y`  
-  *(read 'a', pop 'X', push 'Y')*
+**For PDA:**
+- Transition format: `a,X→Y`  
+  *(read `a`, pop `X`, push `Y`)*
 
-#### Turing Machine (TM)
-- Use transition format: `a→b,R`  
-  *(read 'a', write 'b', move right)*
+**For TM:**
+- Transition format: `a→b,R`  
+  *(read `a`, write `b`, move right)*
 
 ### ▶️ Running Simulations
-- Enter an input string (e.g., `aabba`)
-- Choose **Run** for full simulation or **Step** to advance symbol-by-symbol
-- Visual outcome: **Green** for accepted, **Red** for rejected
+1. Select automaton type
+2. Enter input (e.g., `aabba`)
+3. Click **Run** or **Step**
+4. Observe acceptance (✅ green) or rejection (❌ red)
 
 ---
 
-## 📚 Example Automata Library
+## 📚 Example Automata Included
 
-Includes several ready-to-run automata:
-- **DFA**: Strings ending with `'a'`
-- **DFA**: Even number of `'a'`s
-- **DFA**: Strings starting with `"ab"`
-- **PDA**: Palindromes over `{a, b}`
-- **PDA**: Language `aⁿbⁿ`
-- **TM**: Binary increment operation
-
----
-
-## 🎓 Educational Resources
-
-- Core concepts in **automata theory**
-- Differences between **FA**, **PDA**, and **TM**
-- Guided walkthroughs for **building and testing automata**
-- Visual explanations of **computational logic**
+- DFA: Strings ending with `'a'`
+- DFA: Even number of `'a'`s
+- DFA: Strings beginning with `"ab"`
+- PDA: Palindromes over `{a, b}`
+- PDA: Language `aⁿbⁿ`
+- TM: Binary number increment
 
 ---
 
-## ⚙️ Technical Stack
+## 🎓 Learning Resources
 
-- **Frontend**: HTML5, CSS3, JavaScript
-- **3D Engine**: [Three.js](https://threejs.org)
-- **Architecture**: Entirely client-side, no backend dependencies
-- **Responsive Design**: Optimized for desktop and mobile
+- Foundations of **automata theory**
+- Comparison between **FA**, **PDA**, and **TM**
+- Interactive **tutorials and exercises**
+- Visual breakdown of computational flow
 
 ---
 
-## 🌐 Browser Compatibility
+## 🛠 Tech Stack
 
-Fully tested on:
-- ✅ Chrome *(Recommended)*
+| Component    | Technology         |
+|--------------|--------------------|
+| Frontend     | HTML5, CSS3, JavaScript |
+| 3D Rendering | [Three.js](https://threejs.org) |
+| Deployment   | 100% Client-side (No backend) |
+| Design       | Responsive UI (Desktop & Mobile) |
+
+---
+
+## 🌐 Browser Support
+
+Tested and verified on:
+
+- ✅ Chrome *(recommended)*
 - ✅ Firefox
-- ✅ Edge
 - ✅ Safari
+- ✅ Microsoft Edge
 
 ---
 
-## 🛠️ Local Development
+## 🧑‍💻 Run Locally
 
 ```bash
 # Clone the repository
 git clone https://github.com/username/3d-automata-simulator.git
 
-# Navigate to the project folder
+# Navigate into the directory
 cd 3d-automata-simulator
 
-# Open the project in your browser (option 1)
+# Open directly in browser
 open index.html
 
-# OR run a local server (option 2)
+# OR launch a simple local server
 python -m http.server
-# Then visit: http://localhost:8000
+# Visit: http://localhost:8000
 ```
 
 ---
 
 ## 🤝 Contributing
 
-All contributions are welcome!  
-To contribute:
+We welcome contributions from the community!
 
-1. Fork the repo  
-2. Create your feature branch:  
-   `git checkout -b feature/amazing-feature`
+1. **Fork** the project  
+2. Create a new branch:  
+   `git checkout -b feature/amazing-feature`  
 3. Commit your changes:  
-   `git commit -m "Add amazing feature"`
-4. Push to your branch:  
-   `git push origin feature/amazing-feature`
-5. Open a Pull Request
+   `git commit -m "Add amazing feature"`  
+4. Push to GitHub:  
+   `git push origin feature/amazing-feature`  
+5. Open a **Pull Request**
 
 ---
 
-## 📄 License
+## 📜 License
 
-This project is licensed under the **MIT License**.  
+This project is open-source and available under the **MIT License**.  
 See the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- Inspired by the need for engaging visual aids in computer science education
-- Special thanks to educators and students pushing the boundaries of learning
+- Inspired by the need for accessible tools in theoretical computer science education  
+- Huge thanks to all educators and contributors who simplify complexity for learners worldwide
 
 ---
 
-**Created with ❤️ for the next generation of computer scientists**
+**Crafted with ❤️ for curious minds and future computer scientists.**
 
 ---
 
-Let me know if you'd like a version in Turkish or want this as a `README.md` file directly.
+Let me know if you’d like a `README.md` file version or a Turkish translation.
