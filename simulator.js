@@ -9,6 +9,9 @@ class AutomataSimulator {
             return true;
         };
         
+        // Initialize step mode flag
+        this.stepMode = false;
+        
         try {
             this.setupThreeJS();
             this.setupControls();
@@ -1011,6 +1014,7 @@ class AutomataSimulator {
             
             // Reset simulation state
             this.simulationRunning = false;
+            this.stepMode = false;
             this.simulationStep = 0;
             this.currentState = this.automaton.states.find(s => s.initial);
             this.inputString = document.getElementById('input-string').value;
@@ -1036,6 +1040,7 @@ class AutomataSimulator {
     runSimulation() {
         try {
             this.resetSimulation();
+            this.stepMode = false;
             this.simulationRunning = true;
             this.animateSimulation();
         } catch (error) {
@@ -1046,10 +1051,13 @@ class AutomataSimulator {
     
     stepSimulation() {
         try {
-            if (!this.simulationRunning) {
+            if (!this.simulationRunning && !this.stepMode) {
                 this.resetSimulation();
-                this.simulationRunning = true;
             }
+            
+            // Set step mode instead of simulation running
+            this.stepMode = true;
+            this.simulationRunning = false;
             
             this.processNextInput();
         } catch (error) {
@@ -1071,6 +1079,7 @@ class AutomataSimulator {
             console.error("Error processing input:", error);
             document.getElementById('simulation-status').textContent = `Error: ${error.message}`;
             this.simulationRunning = false;
+            this.stepMode = false;
         }
     }
     
@@ -1169,6 +1178,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
+            this.stepMode = false;
             return;
         }
         
@@ -1193,6 +1203,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
+            this.stepMode = false;
             return;
         }
         
@@ -1237,9 +1248,12 @@ class AutomataSimulator {
                     // Move to next input
                     this.inputIndex++;
                     
-                    // Continue simulation if automatic
-                    if (this.simulationRunning) {
+                    // Continue simulation based on mode
+                    if (this.simulationRunning && !this.stepMode) {
                         setTimeout(() => this.processNextInput(), 500);
+                    } else {
+                        // Reset step mode after completing one step
+                        this.stepMode = false;
                     }
                 }
             );
@@ -1260,6 +1274,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
+            this.stepMode = false;
             return;
         }
         
@@ -1317,6 +1332,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
+            this.stepMode = false;
             return;
         }
         
@@ -1379,9 +1395,12 @@ class AutomataSimulator {
                         this.inputIndex++;
                     }
                     
-                    // Continue simulation if automatic
-                    if (this.simulationRunning) {
+                    // Continue simulation based on mode
+                    if (this.simulationRunning && !this.stepMode) {
                         setTimeout(() => this.processNextInput(), 500);
+                    } else {
+                        // Reset step mode after completing one step
+                        this.stepMode = false;
                     }
                 }
             );
@@ -1400,6 +1419,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
+            this.stepMode = false;
             return;
         }
         
@@ -1427,6 +1447,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
+            this.stepMode = false;
             return;
         }
         
@@ -1490,9 +1511,12 @@ class AutomataSimulator {
                     this.scene.remove(packet.object);
                     this.dataPackets = this.dataPackets.filter(p => p !== packet);
                     
-                    // Continue simulation if automatic
-                    if (this.simulationRunning) {
+                    // Continue simulation based on mode
+                    if (this.simulationRunning && !this.stepMode) {
                         setTimeout(() => this.processNextInput(), 500);
+                    } else {
+                        // Reset step mode after completing one step
+                        this.stepMode = false;
                     }
                 }
             );
