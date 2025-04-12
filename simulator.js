@@ -12,6 +12,9 @@ class AutomataSimulator {
         // Initialize step mode flag
         this.stepMode = false;
         
+        // Create debug panel
+        this.createDebugPanel();
+        
         try {
             this.setupThreeJS();
             this.setupControls();
@@ -1067,6 +1070,9 @@ class AutomataSimulator {
             this.stepMode = true;
             this.simulationRunning = false;
             
+            // Update debug information before processing
+            this.updateDebugInfo();
+            
             // Disable both step and run buttons until animation completes
             document.getElementById('step-simulation').disabled = true;
             document.getElementById('run-simulation').disabled = true;
@@ -1154,20 +1160,22 @@ class AutomataSimulator {
     }
     
     animateDataPacket(packet, points, duration, onComplete) {
-        const self = this;  // Store reference to this
+        const self = this;
         
-        // Create new animation
         const animation = {
             packet: packet,
             points: points,
             startTime: Date.now(),
             duration: duration,
             onComplete: () => {
-                // Remove this animation from active animations
+                // Remove animation and update debug info
                 const index = self.activeAnimations.indexOf(animation);
                 if (index > -1) {
                     self.activeAnimations.splice(index, 1);
                 }
+                
+                // Update debug information after state changes
+                self.updateDebugInfo();
                 
                 // Re-enable step button after animation completes if we're not at the end
                 if (self.stepMode && self.inputIndex < self.inputString.length) {
@@ -1617,6 +1625,80 @@ class AutomataSimulator {
         }
         
         this.renderer.render(this.scene, this.camera);
+    }
+
+    createDebugPanel() {
+        const debugPanel = document.createElement('div');
+        debugPanel.id = 'debug-panel';
+        debugPanel.className = 'panel';
+        debugPanel.style.cssText = `
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            display: none;
+        `;
+        
+        debugPanel.innerHTML = `
+            <h3>Debug Information</h3>
+            <div id="debug-current-state">Current State: -</div>
+            <div id="debug-input">Input: -</div>
+            <div id="debug-position">Position: -</div>
+            <div id="debug-transitions">Available Transitions: -</div>
+            <div id="debug-stack">Stack: -</div>
+            <div id="debug-tape">Tape: -</div>
+        `;
+        
+        document.body.appendChild(debugPanel);
+    }
+
+    updateDebugInfo() {
+        const debugPanel = document.getElementById('debug-panel');
+        debugPanel.style.display = this.stepMode ? 'block' : 'none';
+        
+        if (!this.stepMode) return;
+
+        // Update current state info
+        document.getElementById('debug-current-state').textContent = 
+            `Current State: ${this.currentState ? this.currentState.name : '-'} ` +
+            `(Initial: ${this.currentState?.initial ? 'Yes' : 'No'}, ` +
+            `Final: ${this.currentState?.final ? 'Yes' : 'No'})`;
+
+        // Update input info
+        document.getElementById('debug-input').textContent = 
+            `Input: "${this.inputString}" (Length: ${this.inputString.length})`;
+        
+        // Update position info
+        document.getElementById('debug-position').textContent = 
+            `Position: ${this.inputIndex + 1}/${this.inputString.length} ` +
+            `(Current symbol: "${this.inputIndex < this.inputString.length ? this.inputString[this.inputIndex] : '-'}")`;
+
+        // Update available transitions
+        const availableTransitions = this.automaton.transitions
+            .filter(t => t.from === this.currentState?.name)
+            .map(t => `${t.from} --${t.input}--> ${t.to}`)
+            .join('\n');
+        document.getElementById('debug-transitions').innerHTML = 
+            `Available Transitions:<br><pre>${availableTransitions || 'None'}</pre>`;
+
+        // Update stack/tape based on automaton type
+        if (this.automaton.type === 'pda') {
+            document.getElementById('debug-stack').textContent = 
+                `Stack: [${this.stack.join(',')}]`;
+            document.getElementById('debug-tape').style.display = 'none';
+        } else if (this.automaton.type === 'tm') {
+            document.getElementById('debug-tape').textContent = 
+                `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
+            document.getElementById('debug-stack').style.display = 'none';
+        } else {
+            document.getElementById('debug-stack').style.display = 'none';
+            document.getElementById('debug-tape').style.display = 'none';
+        }
     }
 }
 
