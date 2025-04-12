@@ -1062,6 +1062,9 @@ class AutomataSimulator {
             this.stepMode = true;
             this.simulationRunning = false;
             
+            // Disable step button until current animation completes
+            document.getElementById('step-simulation').disabled = true;
+            
             // Update UI to show step mode
             document.getElementById('simulation-status').textContent = 
                 `Step Mode - Processing step ${this.simulationStep + 1}`;
@@ -1073,6 +1076,9 @@ class AutomataSimulator {
         } catch (error) {
             console.error("Error stepping simulation:", error);
             alert(`Error stepping simulation: ${error.message}`);
+            // Re-enable buttons on error
+            document.getElementById('step-simulation').disabled = false;
+            document.getElementById('run-simulation').disabled = false;
         }
     }
     
@@ -1144,7 +1150,14 @@ class AutomataSimulator {
             points: points,
             startTime: Date.now(),
             duration: duration,
-            onComplete: onComplete,
+            onComplete: () => {
+                // Re-enable step button after animation completes
+                if (this.stepMode) {
+                    document.getElementById('step-simulation').disabled = false;
+                }
+                // Call the original onComplete callback
+                if (onComplete) onComplete();
+            },
             update: function(time) {
                 const elapsed = time - this.startTime;
                 const progress = Math.min(elapsed / this.duration, 1);
@@ -1162,15 +1175,17 @@ class AutomataSimulator {
                 }
                 
                 // Pulsate the glow
-                const pulseScale = 0.8 + 0.4 * Math.sin(progress * Math.PI * 4);
-                packet.glow.scale.set(pulseScale, pulseScale, pulseScale);
+                packet.glow.scale.set(
+                    1 + 0.2 * Math.sin(progress * Math.PI * 4),
+                    1 + 0.2 * Math.sin(progress * Math.PI * 4),
+                    1 + 0.2 * Math.sin(progress * Math.PI * 4)
+                );
                 
-                // Call onComplete when animation finishes
-                if (progress === 1 && this.onComplete) {
+                if (progress === 1) {
                     this.onComplete();
                 }
                 
-                return progress < 1; // Return false when complete
+                return progress < 1;
             }
         };
         
@@ -1195,6 +1210,10 @@ class AutomataSimulator {
             
             this.simulationRunning = false;
             this.stepMode = false;
+            
+            // Re-enable buttons at end of simulation
+            document.getElementById('step-simulation').disabled = false;
+            document.getElementById('run-simulation').disabled = false;
             return;
         }
         
