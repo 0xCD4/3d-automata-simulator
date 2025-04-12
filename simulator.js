@@ -1025,6 +1025,7 @@ class AutomataSimulator {
             
             // Re-enable run button
             document.getElementById('run-simulation').disabled = false;
+            document.getElementById('step-simulation').disabled = false;
             
             // Reset stack for PDA
             this.stack = [];
@@ -1341,6 +1342,10 @@ class AutomataSimulator {
             
             this.simulationRunning = false;
             this.stepMode = false;
+            
+            // Re-enable buttons at end of simulation
+            document.getElementById('step-simulation').disabled = false;
+            document.getElementById('run-simulation').disabled = false;
             return;
         }
         
@@ -1399,6 +1404,10 @@ class AutomataSimulator {
             
             this.simulationRunning = false;
             this.stepMode = false;
+            
+            // Re-enable buttons when rejected
+            document.getElementById('step-simulation').disabled = false;
+            document.getElementById('run-simulation').disabled = false;
             return;
         }
         
@@ -1486,6 +1495,10 @@ class AutomataSimulator {
             
             this.simulationRunning = false;
             this.stepMode = false;
+            
+            // Re-enable buttons at end of simulation
+            document.getElementById('step-simulation').disabled = false;
+            document.getElementById('run-simulation').disabled = false;
             return;
         }
         
@@ -1514,6 +1527,10 @@ class AutomataSimulator {
             
             this.simulationRunning = false;
             this.stepMode = false;
+            
+            // Re-enable buttons when halted
+            document.getElementById('step-simulation').disabled = false;
+            document.getElementById('run-simulation').disabled = false;
             return;
         }
         
