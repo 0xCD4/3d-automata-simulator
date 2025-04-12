@@ -1038,6 +1038,9 @@ class AutomataSimulator {
                 `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
             
             document.getElementById('simulation-status').textContent = 'Ready';
+            
+            // Hide debug panel
+            document.getElementById('debug-panel').style.display = 'none';
         } catch (error) {
             console.error("Error resetting simulation:", error);
             alert(`Error resetting simulation: ${error.message}`);
@@ -1179,7 +1182,7 @@ class AutomataSimulator {
                 self.updateDebugInfo();
                 
                 // Re-enable step button after animation completes if we're not at the end
-                if (self.stepMode && self.inputIndex < self.inputString.length) {
+                if (self.inputIndex < self.inputString.length) {
                     document.getElementById('step-simulation').disabled = false;
                 }
                 
@@ -1237,7 +1240,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
-            this.stepMode = false;
+            // Don't reset step mode here
             
             // Re-enable buttons at end of simulation
             document.getElementById('step-simulation').disabled = false;
@@ -1266,7 +1269,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
-            this.stepMode = false;
+            // Don't reset step mode here
             
             // Re-enable buttons when rejected
             document.getElementById('step-simulation').disabled = false;
@@ -1318,10 +1321,8 @@ class AutomataSimulator {
                     // Continue simulation based on mode
                     if (this.simulationRunning && !this.stepMode) {
                         setTimeout(() => this.processNextInput(), 500);
-                    } else {
-                        // Reset step mode after completing one step
-                        this.stepMode = false;
                     }
+                    // Don't reset step mode here
                 }
             );
         }
@@ -1341,7 +1342,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
-            this.stepMode = false;
+            // Don't reset step mode here
             
             // Re-enable buttons at end of simulation
             document.getElementById('step-simulation').disabled = false;
@@ -1403,7 +1404,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
-            this.stepMode = false;
+            // Don't reset step mode here
             
             // Re-enable buttons when rejected
             document.getElementById('step-simulation').disabled = false;
@@ -1473,10 +1474,8 @@ class AutomataSimulator {
                     // Continue simulation based on mode
                     if (this.simulationRunning && !this.stepMode) {
                         setTimeout(() => this.processNextInput(), 500);
-                    } else {
-                        // Reset step mode after completing one step
-                        this.stepMode = false;
                     }
+                    // Don't reset step mode here
                 }
             );
         }
@@ -1494,7 +1493,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
-            this.stepMode = false;
+            // Don't reset step mode here
             
             // Re-enable buttons at end of simulation
             document.getElementById('step-simulation').disabled = false;
@@ -1526,7 +1525,7 @@ class AutomataSimulator {
             stateObj.glowSphere.material.opacity = 0.4;
             
             this.simulationRunning = false;
-            this.stepMode = false;
+            // Don't reset step mode here
             
             // Re-enable buttons when halted
             document.getElementById('step-simulation').disabled = false;
@@ -1597,10 +1596,8 @@ class AutomataSimulator {
                     // Continue simulation based on mode
                     if (this.simulationRunning && !this.stepMode) {
                         setTimeout(() => this.processNextInput(), 500);
-                    } else {
-                        // Reset step mode after completing one step
-                        this.stepMode = false;
                     }
+                    // Don't reset step mode here
                 }
             );
         }
@@ -1707,10 +1704,12 @@ class AutomataSimulator {
         if (this.automaton.type === 'pda') {
             document.getElementById('debug-stack').textContent = 
                 `Stack: [${this.stack.join(',')}]`;
+            document.getElementById('debug-stack').style.display = 'block';
             document.getElementById('debug-tape').style.display = 'none';
         } else if (this.automaton.type === 'tm') {
             document.getElementById('debug-tape').textContent = 
                 `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
+            document.getElementById('debug-tape').style.display = 'block';
             document.getElementById('debug-stack').style.display = 'none';
         } else {
             document.getElementById('debug-stack').style.display = 'none';
