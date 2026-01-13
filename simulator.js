@@ -1,18 +1,13 @@
-// Realistic 3D Automata Simulator with Advanced Graphics
+// Clean & Modern 3D Automata Simulator
 class AutomataSimulator {
     constructor() {
-        // Set up error handling
         window.onerror = (message, source, lineno, colno, error) => {
             console.error("Error occurred:", message, "at", source, "line", lineno);
             this.hideLoadingOverlay();
-            alert(`An error occurred: ${message}. See console for details.`);
             return true;
         };
 
-        // Initialize step mode flag
         this.stepMode = false;
-
-        // Create debug panel
         this.createDebugPanel();
 
         try {
@@ -27,10 +22,8 @@ class AutomataSimulator {
         } catch (error) {
             console.error("Initialization error:", error);
             this.hideLoadingOverlay();
-            alert(`Initialization error: ${error.message}. See console for details.`);
         }
 
-        // Set animation speed from slider
         this.animationSpeed = 1000 / parseInt(document.getElementById('speed-slider').value);
         document.getElementById('speed-slider').addEventListener('input', (e) => {
             this.animationSpeed = 1000 / parseInt(e.target.value);
@@ -49,301 +42,165 @@ class AutomataSimulator {
         }
     }
 
-    // Easing functions for smooth animations
+    // Smooth easing
     easeInOutCubic(t) {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
-    easeOutElastic(t) {
-        const c4 = (2 * Math.PI) / 3;
-        return t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
-    }
-
-    easeOutBack(t) {
-        const c1 = 1.70158;
-        const c3 = c1 + 1;
-        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-    }
-
-    easeInOutQuad(t) {
-        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    easeOutQuart(t) {
+        return 1 - Math.pow(1 - t, 4);
     }
 
     setupThreeJS() {
-        // Create scene with fog for depth
+        // Clean dark scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x050510);
-        this.scene.fog = new THREE.FogExp2(0x050510, 0.02);
+        this.scene.background = new THREE.Color(0x0a0a12);
 
-        // Create camera
-        this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 8, 18);
+        // Camera
+        this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.set(0, 12, 20);
         this.camera.lookAt(0, 0, 0);
 
-        // Create renderer with advanced settings
-        this.renderer = new THREE.WebGLRenderer({
-            antialias: true,
-            powerPreference: "high-performance"
-        });
+        // Renderer
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.outputEncoding = THREE.sRGBEncoding;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.2;
-
-        // Enable shadows
+        this.renderer.toneMappingExposure = 1.0;
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         document.getElementById('canvas-container').appendChild(this.renderer.domElement);
 
-        // Create environment map for reflections
-        this.createEnvironmentMap();
-
-        // Add lighting
         this.setupLighting();
+        this.createCleanGrid();
 
-        // Add starfield background
-        this.createStarfield();
-
-        // Add ground plane with reflections
-        this.createGroundPlane();
-
-        // Add animated grid
-        this.createAnimatedGrid();
-
-        // Handle window resize
         window.addEventListener('resize', () => this.onWindowResize());
-
-        // Setup camera controls with damping
         this.setupCameraControls();
 
-        // For animations
         this.clock = new THREE.Clock();
         this.dataPackets = [];
         this.activeAnimations = [];
         this.particleSystems = [];
 
-        // Target camera values for smooth interpolation
-        this.targetCameraRotation = { x: 0.3, y: 0 };
-        this.currentCameraRotation = { x: 0.3, y: 0 };
-        this.targetCameraDistance = 18;
-        this.currentCameraDistance = 18;
-    }
-
-    createEnvironmentMap() {
-        // Create a simple procedural environment map for reflections
-        const size = 128;
-        const data = new Uint8Array(size * size * 4 * 6);
-
-        // Fill with gradient colors for each face
-        const colors = [
-            [0.1, 0.1, 0.3], // +x
-            [0.1, 0.1, 0.3], // -x
-            [0.2, 0.2, 0.4], // +y (top - brighter)
-            [0.05, 0.05, 0.1], // -y (bottom - darker)
-            [0.1, 0.1, 0.3], // +z
-            [0.1, 0.1, 0.3]  // -z
-        ];
-
-        for (let face = 0; face < 6; face++) {
-            const offset = face * size * size * 4;
-            for (let i = 0; i < size * size; i++) {
-                const idx = offset + i * 4;
-                data[idx] = Math.floor(colors[face][0] * 255);
-                data[idx + 1] = Math.floor(colors[face][1] * 255);
-                data[idx + 2] = Math.floor(colors[face][2] * 255);
-                data[idx + 3] = 255;
-            }
-        }
-
-        const texture = new THREE.DataTexture(data, size, size);
-        texture.needsUpdate = true;
-
-        // Store for use with materials
-        this.envMapIntensity = 0.5;
+        this.targetCameraRotation = { x: 0.4, y: 0 };
+        this.currentCameraRotation = { x: 0.4, y: 0 };
+        this.targetCameraDistance = 20;
+        this.currentCameraDistance = 20;
     }
 
     setupLighting() {
-        // Ambient light - subtle fill
-        const ambientLight = new THREE.AmbientLight(0x1a1a2e, 0.4);
+        // Soft ambient
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
         this.scene.add(ambientLight);
 
-        // Main directional light with shadows
-        this.mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        this.mainLight.position.set(10, 20, 10);
+        // Main light - soft white
+        this.mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        this.mainLight.position.set(5, 15, 10);
         this.mainLight.castShadow = true;
         this.mainLight.shadow.mapSize.width = 2048;
         this.mainLight.shadow.mapSize.height = 2048;
         this.mainLight.shadow.camera.near = 0.5;
         this.mainLight.shadow.camera.far = 50;
-        this.mainLight.shadow.camera.left = -20;
-        this.mainLight.shadow.camera.right = 20;
-        this.mainLight.shadow.camera.top = 20;
-        this.mainLight.shadow.camera.bottom = -20;
+        this.mainLight.shadow.camera.left = -15;
+        this.mainLight.shadow.camera.right = 15;
+        this.mainLight.shadow.camera.top = 15;
+        this.mainLight.shadow.camera.bottom = -15;
         this.mainLight.shadow.bias = -0.0001;
-        this.mainLight.shadow.radius = 4;
+        this.mainLight.shadow.radius = 3;
         this.scene.add(this.mainLight);
 
-        // Secondary directional light (fill)
-        const fillLight = new THREE.DirectionalLight(0x4466aa, 0.3);
-        fillLight.position.set(-10, 5, -10);
+        // Subtle fill light
+        const fillLight = new THREE.DirectionalLight(0x6080ff, 0.3);
+        fillLight.position.set(-10, 5, -5);
         this.scene.add(fillLight);
 
-        // Rim light for dramatic effect
-        const rimLight = new THREE.DirectionalLight(0x6644ff, 0.4);
-        rimLight.position.set(0, -5, -15);
+        // Subtle rim light
+        const rimLight = new THREE.DirectionalLight(0xff8060, 0.2);
+        rimLight.position.set(0, -3, -10);
         this.scene.add(rimLight);
-
-        // Central point light (animated)
-        this.centralLight = new THREE.PointLight(0x4c6ef5, 1.5, 25);
-        this.centralLight.position.set(0, 3, 0);
-        this.centralLight.castShadow = true;
-        this.centralLight.shadow.mapSize.width = 512;
-        this.centralLight.shadow.mapSize.height = 512;
-        this.scene.add(this.centralLight);
-
-        // Accent point lights
-        const accentLight1 = new THREE.PointLight(0xff6b6b, 0.8, 15);
-        accentLight1.position.set(-8, 2, 0);
-        this.scene.add(accentLight1);
-
-        const accentLight2 = new THREE.PointLight(0x4ecdc4, 0.8, 15);
-        accentLight2.position.set(8, 2, 0);
-        this.scene.add(accentLight2);
-
-        // Store for animation
-        this.accentLights = [accentLight1, accentLight2];
     }
 
-    createStarfield() {
-        const starCount = 2000;
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(starCount * 3);
-        const colors = new Float32Array(starCount * 3);
-        const sizes = new Float32Array(starCount);
+    createCleanGrid() {
+        // Minimal circular grid
+        const gridGroup = new THREE.Group();
 
-        for (let i = 0; i < starCount; i++) {
-            // Distribute stars in a sphere
-            const radius = 100 + Math.random() * 200;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
+        // Concentric circles
+        const circleCount = 4;
+        for (let i = 1; i <= circleCount; i++) {
+            const radius = i * 3;
+            const segments = 64;
+            const circleGeometry = new THREE.BufferGeometry();
+            const positions = [];
 
-            positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-            positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-            positions[i * 3 + 2] = radius * Math.cos(phi);
+            for (let j = 0; j <= segments; j++) {
+                const angle = (j / segments) * Math.PI * 2;
+                positions.push(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+            }
 
-            // Random star colors (white to blue-ish)
-            const colorVal = 0.7 + Math.random() * 0.3;
-            colors[i * 3] = colorVal;
-            colors[i * 3 + 1] = colorVal;
-            colors[i * 3 + 2] = colorVal + Math.random() * 0.2;
-
-            sizes[i] = 0.5 + Math.random() * 1.5;
+            circleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const circleMaterial = new THREE.LineBasicMaterial({
+                color: 0x2a2a40,
+                transparent: true,
+                opacity: 0.4 - (i * 0.08)
+            });
+            const circle = new THREE.Line(circleGeometry, circleMaterial);
+            gridGroup.add(circle);
         }
 
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-        const material = new THREE.PointsMaterial({
-            size: 1,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.8,
-            sizeAttenuation: true
-        });
-
-        this.starfield = new THREE.Points(geometry, material);
-        this.scene.add(this.starfield);
-    }
-
-    createGroundPlane() {
-        // Create reflective ground plane
-        const groundGeometry = new THREE.PlaneGeometry(100, 100);
-        const groundMaterial = new THREE.MeshStandardMaterial({
-            color: 0x0a0a15,
-            metalness: 0.9,
-            roughness: 0.3,
-            transparent: true,
-            opacity: 0.8
-        });
-
-        this.groundPlane = new THREE.Mesh(groundGeometry, groundMaterial);
-        this.groundPlane.rotation.x = -Math.PI / 2;
-        this.groundPlane.position.y = -0.5;
-        this.groundPlane.receiveShadow = true;
-        this.scene.add(this.groundPlane);
-    }
-
-    createAnimatedGrid() {
-        // Create custom animated grid with glowing lines
-        const gridSize = 30;
-        const divisions = 30;
-        const gridGeometry = new THREE.BufferGeometry();
-        const gridPositions = [];
-
-        const step = gridSize / divisions;
-        const halfSize = gridSize / 2;
-
-        // Create grid lines
-        for (let i = 0; i <= divisions; i++) {
-            const pos = -halfSize + i * step;
-            // X-axis lines
-            gridPositions.push(-halfSize, 0, pos, halfSize, 0, pos);
-            // Z-axis lines
-            gridPositions.push(pos, 0, -halfSize, pos, 0, halfSize);
-        }
-
-        gridGeometry.setAttribute('position', new THREE.Float32BufferAttribute(gridPositions, 3));
-
-        const gridMaterial = new THREE.LineBasicMaterial({
-            color: 0x2233aa,
+        // Cross lines
+        const crossGeometry = new THREE.BufferGeometry();
+        const crossPositions = [
+            -12, 0, 0, 12, 0, 0,
+            0, 0, -12, 0, 0, 12
+        ];
+        crossGeometry.setAttribute('position', new THREE.Float32BufferAttribute(crossPositions, 3));
+        const crossMaterial = new THREE.LineBasicMaterial({
+            color: 0x3a3a55,
             transparent: true,
             opacity: 0.3
         });
+        const cross = new THREE.LineSegments(crossGeometry, crossMaterial);
+        gridGroup.add(cross);
 
-        this.grid = new THREE.LineSegments(gridGeometry, gridMaterial);
-        this.grid.position.y = -0.49;
-        this.scene.add(this.grid);
+        gridGroup.position.y = -0.5;
+        this.scene.add(gridGroup);
+        this.grid = gridGroup;
 
-        // Add glowing center cross
-        const crossGeometry = new THREE.BufferGeometry();
-        crossGeometry.setAttribute('position', new THREE.Float32BufferAttribute([
-            -halfSize, 0, 0, halfSize, 0, 0,
-            0, 0, -halfSize, 0, 0, halfSize
-        ], 3));
-
-        const crossMaterial = new THREE.LineBasicMaterial({
-            color: 0x4466ff,
+        // Ground plane - subtle
+        const groundGeometry = new THREE.CircleGeometry(15, 64);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x12121a,
+            metalness: 0.1,
+            roughness: 0.9,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.8
         });
-
-        this.gridCross = new THREE.LineSegments(crossGeometry, crossMaterial);
-        this.gridCross.position.y = -0.48;
-        this.scene.add(this.gridCross);
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -0.51;
+        ground.receiveShadow = true;
+        this.scene.add(ground);
     }
 
     setupPostProcessing() {
-        // Create effect composer
         this.composer = new THREE.EffectComposer(this.renderer);
 
-        // Render pass
         const renderPass = new THREE.RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
 
-        // Bloom pass for glow effects
+        // Subtle bloom
         const bloomPass = new THREE.UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.8,  // strength
-            0.4,  // radius
-            0.85  // threshold
+            0.4,   // strength - reduced
+            0.5,   // radius
+            0.9    // threshold - higher = less bloom
         );
         this.composer.addPass(bloomPass);
         this.bloomPass = bloomPass;
 
-        // FXAA anti-aliasing
+        // FXAA
         const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
         fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
         this.composer.addPass(fxaaPass);
@@ -353,20 +210,15 @@ class AutomataSimulator {
     setupCameraControls() {
         this.isDragging = false;
         this.previousMousePosition = { x: 0, y: 0 };
-        this.cameraDamping = 0.08;
+        this.cameraDamping = 0.06;
 
         this.renderer.domElement.addEventListener('mousedown', (e) => {
             this.isDragging = true;
             this.previousMousePosition = { x: e.clientX, y: e.clientY };
         });
 
-        this.renderer.domElement.addEventListener('mouseup', () => {
-            this.isDragging = false;
-        });
-
-        this.renderer.domElement.addEventListener('mouseleave', () => {
-            this.isDragging = false;
-        });
+        this.renderer.domElement.addEventListener('mouseup', () => this.isDragging = false);
+        this.renderer.domElement.addEventListener('mouseleave', () => this.isDragging = false);
 
         document.addEventListener('mousemove', (e) => {
             if (this.isDragging) {
@@ -375,26 +227,21 @@ class AutomataSimulator {
                     y: e.clientY - this.previousMousePosition.y
                 };
 
-                this.targetCameraRotation.x += deltaMove.y * 0.005;
-                this.targetCameraRotation.y += deltaMove.x * 0.005;
-
-                // Limit vertical rotation
-                this.targetCameraRotation.x = Math.max(-0.5, Math.min(Math.PI / 2.5, this.targetCameraRotation.x));
+                this.targetCameraRotation.x += deltaMove.y * 0.004;
+                this.targetCameraRotation.y += deltaMove.x * 0.004;
+                this.targetCameraRotation.x = Math.max(0.1, Math.min(Math.PI / 2.2, this.targetCameraRotation.x));
             }
-
             this.previousMousePosition = { x: e.clientX, y: e.clientY };
         });
 
-        // Zoom with mouse wheel
         this.renderer.domElement.addEventListener('wheel', (e) => {
             e.preventDefault();
-            this.targetCameraDistance += e.deltaY * 0.02;
-            this.targetCameraDistance = Math.max(8, Math.min(40, this.targetCameraDistance));
+            this.targetCameraDistance += e.deltaY * 0.015;
+            this.targetCameraDistance = Math.max(10, Math.min(35, this.targetCameraDistance));
         });
     }
 
     updateCameraPosition() {
-        // Smooth interpolation for camera movement
         this.currentCameraRotation.x += (this.targetCameraRotation.x - this.currentCameraRotation.x) * this.cameraDamping;
         this.currentCameraRotation.y += (this.targetCameraRotation.y - this.currentCameraRotation.y) * this.cameraDamping;
         this.currentCameraDistance += (this.targetCameraDistance - this.currentCameraDistance) * this.cameraDamping;
@@ -403,7 +250,7 @@ class AutomataSimulator {
         const y = this.currentCameraDistance * Math.sin(this.currentCameraRotation.x);
         const z = this.currentCameraDistance * Math.cos(this.currentCameraRotation.y) * Math.cos(this.currentCameraRotation.x);
 
-        this.camera.position.set(x, Math.max(y, 2), z);
+        this.camera.position.set(x, Math.max(y, 3), z);
         this.camera.lookAt(0, 0, 0);
     }
 
@@ -412,69 +259,462 @@ class AutomataSimulator {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.composer.setSize(window.innerWidth, window.innerHeight);
-
-        // Update FXAA resolution
         if (this.fxaaPass) {
             this.fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
         }
     }
 
+    // Color palette - clean and modern
+    colors = {
+        initial: { base: 0x4a9eff, emissive: 0x2060cc, glow: 0x4a9eff },
+        final: { base: 0x50e890, emissive: 0x20a050, glow: 0x50e890 },
+        regular: { base: 0x8888aa, emissive: 0x404060, glow: 0x6666aa },
+        current: { base: 0xffcc40, emissive: 0xcc9020, glow: 0xffcc40 },
+        error: { base: 0xff5555, emissive: 0xaa2020, glow: 0xff5555 },
+        transition: { base: 0x6a7aff, emissive: 0x3040aa, glow: 0x6a7aff },
+        packet: { base: 0xff6b6b, emissive: 0xcc3030, glow: 0xff6b6b }
+    };
+
+    createStateSphere(state) {
+        const group = new THREE.Group();
+        group.userData.isAutomatonObject = true;
+
+        let colorSet;
+        if (state.final && state.initial) {
+            colorSet = this.colors.final;
+        } else if (state.final) {
+            colorSet = this.colors.final;
+        } else if (state.initial) {
+            colorSet = this.colors.initial;
+        } else {
+            colorSet = this.colors.regular;
+        }
+
+        // Main sphere - clean glass-like material
+        const geometry = new THREE.SphereGeometry(0.7, 48, 48);
+        const material = new THREE.MeshStandardMaterial({
+            color: colorSet.base,
+            metalness: 0.3,
+            roughness: 0.15,
+            emissive: colorSet.emissive,
+            emissiveIntensity: 0.15
+        });
+
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.castShadow = true;
+        sphere.receiveShadow = true;
+        group.add(sphere);
+
+        // Subtle inner glow
+        const glowGeometry = new THREE.SphereGeometry(0.75, 32, 32);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: colorSet.glow,
+            transparent: true,
+            opacity: 0.1,
+            side: THREE.BackSide
+        });
+        const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
+        group.add(glowSphere);
+
+        // Final state ring - thin and elegant
+        if (state.final) {
+            const ringGeometry = new THREE.TorusGeometry(0.95, 0.03, 16, 64);
+            const ringMaterial = new THREE.MeshStandardMaterial({
+                color: 0x50e890,
+                metalness: 0.5,
+                roughness: 0.2,
+                emissive: 0x30a060,
+                emissiveIntensity: 0.3
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = Math.PI / 2;
+            ring.castShadow = true;
+            group.add(ring);
+        }
+
+        // Initial state indicator - small elegant arrow
+        if (state.initial) {
+            const arrowGroup = new THREE.Group();
+
+            const shaftGeometry = new THREE.CylinderGeometry(0.04, 0.04, 1.2, 12);
+            const shaftMaterial = new THREE.MeshStandardMaterial({
+                color: 0x4a9eff,
+                metalness: 0.4,
+                roughness: 0.3,
+                emissive: 0x2060cc,
+                emissiveIntensity: 0.2
+            });
+            const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+            shaft.rotation.z = Math.PI / 2;
+            shaft.position.x = -1.5;
+            arrowGroup.add(shaft);
+
+            const headGeometry = new THREE.ConeGeometry(0.12, 0.25, 12);
+            const head = new THREE.Mesh(headGeometry, shaftMaterial);
+            head.rotation.z = -Math.PI / 2;
+            head.position.x = -0.85;
+            arrowGroup.add(head);
+
+            group.add(arrowGroup);
+        }
+
+        group.position.copy(state.position);
+
+        return {
+            group,
+            sphere,
+            glowSphere,
+            colorSet
+        };
+    }
+
+    createTransitionCurve(fromPos, toPos, isSelfLoop = false) {
+        if (isSelfLoop) {
+            const points = [];
+            const loopRadius = 0.8;
+            const loopHeight = 1.2;
+
+            for (let i = 0; i <= 32; i++) {
+                const t = i / 32;
+                const angle = Math.PI * 0.8 + t * Math.PI * 1.4;
+                const x = fromPos.x + loopRadius * Math.cos(angle);
+                const y = fromPos.y + loopHeight + 0.4 * Math.sin(t * Math.PI);
+                const z = fromPos.z + loopRadius * Math.sin(angle);
+                points.push(new THREE.Vector3(x, y, z));
+            }
+            return points;
+        }
+
+        const midPoint = new THREE.Vector3().addVectors(fromPos, toPos).multiplyScalar(0.5);
+        const direction = new THREE.Vector3().subVectors(toPos, fromPos);
+        const distance = direction.length();
+        const curveHeight = Math.min(distance * 0.12, 1.0);
+
+        const controlPoint = midPoint.clone();
+        controlPoint.y += curveHeight;
+
+        const curve = new THREE.QuadraticBezierCurve3(fromPos, controlPoint, toPos);
+        const points = curve.getPoints(32);
+
+        // Trim to not overlap with target
+        return points.filter(p => p.distanceTo(toPos) > 0.8);
+    }
+
+    createTextSprite(text, color, scale = 1) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = 256;
+        canvas.height = 128;
+
+        context.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        context.fillStyle = color || '#ffffff';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.minFilter = THREE.LinearFilter;
+        const material = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            depthTest: false
+        });
+
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(1.2 * scale, 0.6 * scale, 1);
+        sprite.userData.isAutomatonObject = true;
+        return sprite;
+    }
+
+    visualizeAutomaton() {
+        try {
+            this.stateObjects = {};
+            this.transitionObjects = [];
+
+            // Create states
+            this.automaton.states.forEach(state => {
+                const stateVisual = this.createStateSphere(state);
+                this.scene.add(stateVisual.group);
+
+                // Label
+                const textSprite = this.createTextSprite(state.name, '#ffffff');
+                textSprite.position.set(state.position.x, state.position.y + 1.4, state.position.z);
+                this.scene.add(textSprite);
+
+                this.stateObjects[state.name] = {
+                    ...stateVisual,
+                    textSprite,
+                    position: state.position.clone(),
+                    state: state
+                };
+            });
+
+            // Create transitions
+            this.automaton.transitions.forEach(transition => {
+                const fromState = this.automaton.states.find(s => s.name === transition.from);
+                const toState = this.automaton.states.find(s => s.name === transition.to);
+                if (!fromState || !toState) return;
+
+                const isSelfLoop = fromState.name === toState.name;
+                const points = this.createTransitionCurve(fromState.position, toState.position, isSelfLoop);
+
+                // Tube - thin and clean
+                const curve = new THREE.CatmullRomCurve3(points);
+                const tubeGeometry = new THREE.TubeGeometry(curve, 48, 0.025, 8, false);
+                const tubeMaterial = new THREE.MeshStandardMaterial({
+                    color: this.colors.transition.base,
+                    metalness: 0.4,
+                    roughness: 0.3,
+                    emissive: this.colors.transition.emissive,
+                    emissiveIntensity: 0.15,
+                    transparent: true,
+                    opacity: 0.85
+                });
+
+                const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+                tubeMesh.userData.isAutomatonObject = true;
+                tubeMesh.castShadow = true;
+                this.scene.add(tubeMesh);
+
+                // Arrow head - small
+                let arrowHead = null;
+                if (points.length >= 2) {
+                    const lastPoint = points[points.length - 1];
+                    const secondLastPoint = points[points.length - 2];
+                    const direction = new THREE.Vector3().subVectors(lastPoint, secondLastPoint).normalize();
+
+                    const coneGeometry = new THREE.ConeGeometry(0.1, 0.22, 12);
+                    const coneMaterial = new THREE.MeshStandardMaterial({
+                        color: this.colors.transition.base,
+                        metalness: 0.4,
+                        roughness: 0.3,
+                        emissive: this.colors.transition.emissive,
+                        emissiveIntensity: 0.2
+                    });
+
+                    arrowHead = new THREE.Mesh(coneGeometry, coneMaterial);
+                    arrowHead.userData.isAutomatonObject = true;
+                    arrowHead.position.copy(lastPoint);
+                    arrowHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+                    arrowHead.castShadow = true;
+                    this.scene.add(arrowHead);
+                }
+
+                // Label - positioned nicely
+                const labelPos = points[Math.floor(points.length / 2)].clone();
+                labelPos.y += 0.35;
+
+                const textSprite = this.createTextSprite(transition.input, '#8899ff', 0.8);
+                textSprite.position.copy(labelPos);
+                this.scene.add(textSprite);
+
+                this.transitionObjects.push({
+                    from: transition.from,
+                    to: transition.to,
+                    input: transition.input,
+                    tube: tubeMesh,
+                    arrow: arrowHead,
+                    textSprite,
+                    points,
+                    selfTransition: isSelfLoop
+                });
+            });
+
+            this.updateInfoDisplay();
+        } catch (error) {
+            console.error("Error visualizing automaton:", error);
+        }
+    }
+
+    createDataPacket(position, inputSymbol) {
+        const group = new THREE.Group();
+        group.userData.isAutomatonObject = true;
+
+        // Core - small and clean
+        const coreGeometry = new THREE.SphereGeometry(0.18, 24, 24);
+        const coreMaterial = new THREE.MeshStandardMaterial({
+            color: this.colors.packet.base,
+            metalness: 0.5,
+            roughness: 0.2,
+            emissive: this.colors.packet.emissive,
+            emissiveIntensity: 0.4
+        });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        group.add(core);
+
+        // Subtle glow
+        const glowGeometry = new THREE.SphereGeometry(0.28, 16, 16);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: this.colors.packet.glow,
+            transparent: true,
+            opacity: 0.25,
+            side: THREE.BackSide
+        });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        group.add(glow);
+
+        // Label
+        const labelSprite = this.createTextSprite(inputSymbol, '#ffffff', 0.5);
+        labelSprite.position.y = 0.45;
+        group.add(labelSprite);
+
+        group.position.copy(position);
+        this.scene.add(group);
+
+        // Simple trail
+        const trail = this.createSimpleTrail();
+        this.scene.add(trail);
+        this.particleSystems.push(trail);
+
+        return {
+            group,
+            core,
+            glow,
+            label: labelSprite,
+            trail,
+            trailPositions: [],
+            inputSymbol
+        };
+    }
+
+    createSimpleTrail() {
+        const particleCount = 30;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = 0;
+            positions[i * 3 + 1] = -1000;
+            positions[i * 3 + 2] = 0;
+
+            const fade = 1 - (i / particleCount);
+            colors[i * 3] = 1.0;
+            colors[i * 3 + 1] = 0.4 * fade;
+            colors[i * 3 + 2] = 0.4 * fade;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.08,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.6,
+            sizeAttenuation: true,
+            blending: THREE.AdditiveBlending
+        });
+
+        return new THREE.Points(geometry, material);
+    }
+
+    updateTrail(packet, currentPosition) {
+        if (!packet.trail) return;
+
+        packet.trailPositions.unshift(currentPosition.clone());
+        if (packet.trailPositions.length > 30) packet.trailPositions.pop();
+
+        const positions = packet.trail.geometry.attributes.position.array;
+        for (let i = 0; i < packet.trailPositions.length && i < 30; i++) {
+            const pos = packet.trailPositions[i];
+            positions[i * 3] = pos.x;
+            positions[i * 3 + 1] = pos.y;
+            positions[i * 3 + 2] = pos.z;
+        }
+        packet.trail.geometry.attributes.position.needsUpdate = true;
+    }
+
+    animateDataPacket(packet, points, duration, onComplete) {
+        const self = this;
+
+        const animation = {
+            packet,
+            points,
+            startTime: Date.now(),
+            duration,
+            onComplete: () => {
+                const index = self.activeAnimations.indexOf(animation);
+                if (index > -1) self.activeAnimations.splice(index, 1);
+                self.updateDebugInfo();
+                if (self.inputIndex < self.inputString.length) {
+                    document.getElementById('step-simulation').disabled = false;
+                }
+                if (onComplete) onComplete();
+            },
+            update: function(time) {
+                const elapsed = time - this.startTime;
+                const rawProgress = Math.min(elapsed / this.duration, 1);
+                const progress = self.easeOutQuart(rawProgress);
+
+                if (points && points.length > 1) {
+                    const pointIndex = Math.floor(progress * (points.length - 1));
+                    const fraction = progress * (points.length - 1) - pointIndex;
+
+                    if (pointIndex < points.length - 1) {
+                        const p1 = points[pointIndex];
+                        const p2 = points[pointIndex + 1];
+                        packet.group.position.lerpVectors(p1, p2, fraction);
+                        self.updateTrail(packet, packet.group.position);
+                    }
+                }
+
+                // Subtle pulse
+                const pulse = 1 + 0.1 * Math.sin(rawProgress * Math.PI * 6);
+                packet.glow.scale.setScalar(pulse);
+
+                if (rawProgress === 1) this.onComplete();
+                return rawProgress < 1;
+            }
+        };
+
+        this.dataPackets.push(packet);
+        this.activeAnimations.push(animation);
+        return animation;
+    }
+
+    highlightState(stateName, colorSet, intensity = 0.3) {
+        const stateObj = this.stateObjects[stateName];
+        if (!stateObj) return;
+
+        stateObj.sphere.material.color.setHex(colorSet.base);
+        stateObj.sphere.material.emissive.setHex(colorSet.emissive);
+        stateObj.sphere.material.emissiveIntensity = intensity;
+        stateObj.glowSphere.material.color.setHex(colorSet.glow);
+        stateObj.glowSphere.material.opacity = 0.2;
+    }
+
+    highlightTransition(transObj) {
+        transObj.tube.material.emissiveIntensity = 0.4;
+        transObj.tube.material.opacity = 1.0;
+        if (transObj.arrow) {
+            transObj.arrow.material.emissiveIntensity = 0.4;
+        }
+    }
+
+    // ==================== CONTROL SETUP ====================
     setupControls() {
-        // Toggle controls visibility
         document.getElementById('toggle-controls').addEventListener('click', () => {
             const controlsPanel = document.getElementById('controls');
             const toggleButton = document.getElementById('controls-toggle');
-
             controlsPanel.classList.toggle('hidden');
-
-            if (controlsPanel.classList.contains('hidden')) {
-                toggleButton.style.display = 'block';
-            } else {
-                toggleButton.style.display = 'none';
-            }
+            toggleButton.style.display = controlsPanel.classList.contains('hidden') ? 'block' : 'none';
         });
 
-        // Show controls button
         document.getElementById('controls-toggle').addEventListener('click', () => {
-            const controlsPanel = document.getElementById('controls');
-            const toggleButton = document.getElementById('controls-toggle');
-
-            controlsPanel.classList.remove('hidden');
-            toggleButton.style.display = 'none';
+            document.getElementById('controls').classList.remove('hidden');
+            document.getElementById('controls-toggle').style.display = 'none';
         });
 
-        // Create automaton button
-        document.getElementById('create-automaton').addEventListener('click', () => {
-            this.createCustomAutomaton();
-        });
+        document.getElementById('create-automaton').addEventListener('click', () => this.createCustomAutomaton());
+        document.querySelector('.add-state').addEventListener('click', () => this.addStateInput());
+        document.querySelector('.add-transition').addEventListener('click', () => this.addTransitionInput());
+        document.getElementById('run-simulation').addEventListener('click', () => this.runSimulation());
+        document.getElementById('step-simulation').addEventListener('click', () => this.stepSimulation());
+        document.getElementById('reset-simulation').addEventListener('click', () => this.resetSimulation());
 
-        // Add state button
-        document.querySelector('.add-state').addEventListener('click', () => {
-            this.addStateInput();
-        });
-
-        // Add transition button
-        document.querySelector('.add-transition').addEventListener('click', () => {
-            this.addTransitionInput();
-        });
-
-        // Simulation controls
-        document.getElementById('run-simulation').addEventListener('click', () => {
-            this.runSimulation();
-        });
-
-        document.getElementById('step-simulation').addEventListener('click', () => {
-            this.stepSimulation();
-        });
-
-        document.getElementById('reset-simulation').addEventListener('click', () => {
-            this.resetSimulation();
-        });
-
-        // Automaton type change
         document.getElementById('automaton-type').addEventListener('change', (e) => {
             const type = e.target.value;
-
             document.getElementById('pda-controls').style.display = type === 'pda' ? 'block' : 'none';
             document.getElementById('tm-controls').style.display = type === 'tm' ? 'block' : 'none';
             document.getElementById('simulation-stack').style.display = type === 'pda' ? 'block' : 'none';
@@ -486,12 +726,10 @@ class AutomataSimulator {
         document.getElementById('show-tutorial').addEventListener('click', () => {
             const panel = document.getElementById('tutorial-panel');
             panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
-
             this.tutorialStep = 1;
             document.querySelectorAll('.tutorial-step').forEach((step, index) => {
                 step.style.display = index === 0 ? 'block' : 'none';
             });
-
             document.querySelector('.prev-step').style.visibility = 'hidden';
             document.querySelector('.next-step').textContent = 'Next';
         });
@@ -504,9 +742,7 @@ class AutomataSimulator {
                 document.getElementById(`step${this.tutorialStep}`).style.display = 'none';
                 this.tutorialStep++;
                 document.getElementById(`step${this.tutorialStep}`).style.display = 'block';
-
                 document.querySelector('.prev-step').style.visibility = 'visible';
-
                 if (this.tutorialStep === tutorialSteps) {
                     document.querySelector('.next-step').textContent = 'Close';
                 }
@@ -520,11 +756,7 @@ class AutomataSimulator {
                 document.getElementById(`step${this.tutorialStep}`).style.display = 'none';
                 this.tutorialStep--;
                 document.getElementById(`step${this.tutorialStep}`).style.display = 'block';
-
-                if (this.tutorialStep === 1) {
-                    document.querySelector('.prev-step').style.visibility = 'hidden';
-                }
-
+                if (this.tutorialStep === 1) document.querySelector('.prev-step').style.visibility = 'hidden';
                 document.querySelector('.next-step').textContent = 'Next';
             }
         });
@@ -539,152 +771,93 @@ class AutomataSimulator {
 
         document.querySelectorAll('.example-automaton').forEach(element => {
             element.addEventListener('click', () => {
-                try {
-                    const exampleType = element.getAttribute('data-example');
-                    this.loadExampleAutomaton(exampleType);
-                    document.getElementById('examples-panel').style.display = 'none';
-                } catch (error) {
-                    console.error("Error loading example:", error);
-                    alert(`Error loading example: ${error.message}`);
-                }
+                const exampleType = element.getAttribute('data-example');
+                this.loadExampleAutomaton(exampleType);
+                document.getElementById('examples-panel').style.display = 'none';
             });
         });
     }
 
     loadExampleAutomaton(exampleType) {
-        switch(exampleType) {
-            case 'ends-with-a':
-                this.loadFiniteAutomaton(
-                    [
-                        { name: 'q0', initial: true, final: false },
-                        { name: 'q1', initial: false, final: true }
-                    ],
-                    [
-                        { from: 'q0', to: 'q0', input: 'b' },
-                        { from: 'q0', to: 'q1', input: 'a' },
-                        { from: 'q1', to: 'q0', input: 'b' },
-                        { from: 'q1', to: 'q1', input: 'a' }
-                    ],
-                    'aabba'
-                );
-                break;
+        const examples = {
+            'ends-with-a': {
+                type: 'fa',
+                states: [{ name: 'q0', initial: true, final: false }, { name: 'q1', initial: false, final: true }],
+                transitions: [
+                    { from: 'q0', to: 'q0', input: 'b' }, { from: 'q0', to: 'q1', input: 'a' },
+                    { from: 'q1', to: 'q0', input: 'b' }, { from: 'q1', to: 'q1', input: 'a' }
+                ],
+                input: 'aabba'
+            },
+            'even-a': {
+                type: 'fa',
+                states: [{ name: 'even', initial: true, final: true }, { name: 'odd', initial: false, final: false }],
+                transitions: [
+                    { from: 'even', to: 'odd', input: 'a' }, { from: 'even', to: 'even', input: 'b' },
+                    { from: 'odd', to: 'even', input: 'a' }, { from: 'odd', to: 'odd', input: 'b' }
+                ],
+                input: 'aabab'
+            },
+            'starts-with-ab': {
+                type: 'fa',
+                states: [
+                    { name: 'q0', initial: true, final: false }, { name: 'q1', initial: false, final: false },
+                    { name: 'q2', initial: false, final: true }, { name: 'q3', initial: false, final: false }
+                ],
+                transitions: [
+                    { from: 'q0', to: 'q1', input: 'a' }, { from: 'q0', to: 'q3', input: 'b' },
+                    { from: 'q1', to: 'q2', input: 'b' }, { from: 'q1', to: 'q3', input: 'a' },
+                    { from: 'q2', to: 'q2', input: 'a' }, { from: 'q2', to: 'q2', input: 'b' },
+                    { from: 'q3', to: 'q3', input: 'a' }, { from: 'q3', to: 'q3', input: 'b' }
+                ],
+                input: 'abaa'
+            },
+            'palindrome': {
+                type: 'pda',
+                states: [
+                    { name: 'q0', initial: true, final: false }, { name: 'q1', initial: false, final: false },
+                    { name: 'q2', initial: false, final: true }
+                ],
+                transitions: [
+                    { from: 'q0', to: 'q0', input: 'a,ε→a' }, { from: 'q0', to: 'q0', input: 'b,ε→b' },
+                    { from: 'q0', to: 'q1', input: 'ε,ε→ε' }, { from: 'q1', to: 'q1', input: 'a,a→ε' },
+                    { from: 'q1', to: 'q1', input: 'b,b→ε' }, { from: 'q1', to: 'q2', input: 'ε,ε→ε' }
+                ],
+                input: 'abba'
+            },
+            'anbn': {
+                type: 'pda',
+                states: [
+                    { name: 'q0', initial: true, final: false }, { name: 'q1', initial: false, final: false },
+                    { name: 'q2', initial: false, final: true }
+                ],
+                transitions: [
+                    { from: 'q0', to: 'q1', input: 'a,ε→X' }, { from: 'q1', to: 'q1', input: 'a,ε→X' },
+                    { from: 'q1', to: 'q2', input: 'b,X→ε' }, { from: 'q2', to: 'q2', input: 'b,X→ε' }
+                ],
+                input: 'aaabbb'
+            },
+            'tm-binary-add': {
+                type: 'tm',
+                states: [
+                    { name: 'q0', initial: true, final: false }, { name: 'q1', initial: false, final: false },
+                    { name: 'q2', initial: false, final: true }
+                ],
+                transitions: [
+                    { from: 'q0', to: 'q0', input: '1→1,R' }, { from: 'q0', to: 'q0', input: '0→0,R' },
+                    { from: 'q0', to: 'q1', input: '_→_,L' }, { from: 'q1', to: 'q1', input: '1→0,L' },
+                    { from: 'q1', to: 'q2', input: '0→1,R' }, { from: 'q1', to: 'q2', input: '_→1,R' }
+                ],
+                input: '1011'
+            }
+        };
 
-            case 'even-a':
-                this.loadFiniteAutomaton(
-                    [
-                        { name: 'even', initial: true, final: true },
-                        { name: 'odd', initial: false, final: false }
-                    ],
-                    [
-                        { from: 'even', to: 'odd', input: 'a' },
-                        { from: 'even', to: 'even', input: 'b' },
-                        { from: 'odd', to: 'even', input: 'a' },
-                        { from: 'odd', to: 'odd', input: 'b' }
-                    ],
-                    'aabab'
-                );
-                break;
+        const example = examples[exampleType];
+        if (!example) return;
 
-            case 'starts-with-ab':
-                this.loadFiniteAutomaton(
-                    [
-                        { name: 'q0', initial: true, final: false },
-                        { name: 'q1', initial: false, final: false },
-                        { name: 'q2', initial: false, final: true },
-                        { name: 'q3', initial: false, final: false }
-                    ],
-                    [
-                        { from: 'q0', to: 'q1', input: 'a' },
-                        { from: 'q0', to: 'q3', input: 'b' },
-                        { from: 'q1', to: 'q2', input: 'b' },
-                        { from: 'q1', to: 'q3', input: 'a' },
-                        { from: 'q2', to: 'q2', input: 'a' },
-                        { from: 'q2', to: 'q2', input: 'b' },
-                        { from: 'q3', to: 'q3', input: 'a' },
-                        { from: 'q3', to: 'q3', input: 'b' }
-                    ],
-                    'abaa'
-                );
-                break;
-
-            case 'palindrome':
-                this.loadPushdownAutomaton(
-                    [
-                        { name: 'q0', initial: true, final: false },
-                        { name: 'q1', initial: false, final: false },
-                        { name: 'q2', initial: false, final: true }
-                    ],
-                    [
-                        { from: 'q0', to: 'q0', input: 'a,ε→a' },
-                        { from: 'q0', to: 'q0', input: 'b,ε→b' },
-                        { from: 'q0', to: 'q1', input: 'ε,ε→ε' },
-                        { from: 'q1', to: 'q1', input: 'a,a→ε' },
-                        { from: 'q1', to: 'q1', input: 'b,b→ε' },
-                        { from: 'q1', to: 'q2', input: 'ε,ε→ε' }
-                    ],
-                    'abba'
-                );
-                break;
-
-            case 'anbn':
-                this.loadPushdownAutomaton(
-                    [
-                        { name: 'q0', initial: true, final: false },
-                        { name: 'q1', initial: false, final: false },
-                        { name: 'q2', initial: false, final: true }
-                    ],
-                    [
-                        { from: 'q0', to: 'q1', input: 'a,ε→X' },
-                        { from: 'q1', to: 'q1', input: 'a,ε→X' },
-                        { from: 'q1', to: 'q2', input: 'b,X→ε' },
-                        { from: 'q2', to: 'q2', input: 'b,X→ε' }
-                    ],
-                    'aaabbb'
-                );
-                break;
-
-            case 'tm-binary-add':
-                this.loadTuringMachine(
-                    [
-                        { name: 'q0', initial: true, final: false },
-                        { name: 'q1', initial: false, final: false },
-                        { name: 'q2', initial: false, final: true }
-                    ],
-                    [
-                        { from: 'q0', to: 'q0', input: '1→1,R' },
-                        { from: 'q0', to: 'q0', input: '0→0,R' },
-                        { from: 'q0', to: 'q1', input: '_→_,L' },
-                        { from: 'q1', to: 'q1', input: '1→0,L' },
-                        { from: 'q1', to: 'q2', input: '0→1,R' },
-                        { from: 'q1', to: 'q2', input: '_→1,R' }
-                    ],
-                    '1011'
-                );
-                break;
-        }
-    }
-
-    loadFiniteAutomaton(states, transitions, inputString) {
-        document.getElementById('automaton-type').value = 'fa';
-        const event = new Event('change');
-        document.getElementById('automaton-type').dispatchEvent(event);
-        this.updateControlsWithAutomaton(states, transitions, inputString);
-        this.createCustomAutomaton();
-    }
-
-    loadPushdownAutomaton(states, transitions, inputString) {
-        document.getElementById('automaton-type').value = 'pda';
-        const event = new Event('change');
-        document.getElementById('automaton-type').dispatchEvent(event);
-        this.updateControlsWithAutomaton(states, transitions, inputString);
-        this.createCustomAutomaton();
-    }
-
-    loadTuringMachine(states, transitions, inputString) {
-        document.getElementById('automaton-type').value = 'tm';
-        const event = new Event('change');
-        document.getElementById('automaton-type').dispatchEvent(event);
-        this.updateControlsWithAutomaton(states, transitions, inputString);
+        document.getElementById('automaton-type').value = example.type;
+        document.getElementById('automaton-type').dispatchEvent(new Event('change'));
+        this.updateControlsWithAutomaton(example.states, example.transitions, example.input);
         this.createCustomAutomaton();
     }
 
@@ -701,13 +874,10 @@ class AutomataSimulator {
                 <label><input type="checkbox" ${state.final ? 'checked' : ''}> Final</label>
                 ${index === 0 ? '<button class="add-state">+</button>' : '<button class="remove-state">-</button>'}
             `;
-
             statesContainer.appendChild(stateDiv);
 
             if (index === 0) {
-                stateDiv.querySelector('.add-state').addEventListener('click', () => {
-                    this.addStateInput();
-                });
+                stateDiv.querySelector('.add-state').addEventListener('click', () => this.addStateInput());
             } else {
                 stateDiv.querySelector('.remove-state').addEventListener('click', () => {
                     stateDiv.remove();
@@ -729,7 +899,6 @@ class AutomataSimulator {
             const inputSymbol = document.createElement('input');
             inputSymbol.type = 'text';
             inputSymbol.className = 'input-symbol';
-            inputSymbol.placeholder = 'Input';
             inputSymbol.value = transition.input;
 
             const toStateSelect = document.createElement('select');
@@ -743,17 +912,12 @@ class AutomataSimulator {
             transitionDiv.appendChild(inputSymbol);
             transitionDiv.appendChild(toStateSelect);
             transitionDiv.appendChild(button);
-
             transitionsContainer.appendChild(transitionDiv);
 
             if (index === 0) {
-                button.addEventListener('click', () => {
-                    this.addTransitionInput();
-                });
+                button.addEventListener('click', () => this.addTransitionInput());
             } else {
-                button.addEventListener('click', () => {
-                    transitionDiv.remove();
-                });
+                button.addEventListener('click', () => transitionDiv.remove());
             }
         });
 
@@ -763,12 +927,8 @@ class AutomataSimulator {
         const toSelectors = document.querySelectorAll('.to-state');
 
         transitions.forEach((transition, index) => {
-            if (index < fromSelectors.length) {
-                fromSelectors[index].value = transition.from;
-            }
-            if (index < toSelectors.length) {
-                toSelectors[index].value = transition.to;
-            }
+            if (index < fromSelectors.length) fromSelectors[index].value = transition.from;
+            if (index < toSelectors.length) toSelectors[index].value = transition.to;
         });
 
         document.getElementById('input-string').value = inputString;
@@ -786,7 +946,6 @@ class AutomataSimulator {
             <label><input type="checkbox"> Final</label>
             <button class="remove-state">-</button>
         `;
-
         statesContainer.appendChild(stateDiv);
 
         stateDiv.querySelector('.remove-state').addEventListener('click', () => {
@@ -799,7 +958,6 @@ class AutomataSimulator {
 
     addTransitionInput() {
         const transitionsContainer = document.getElementById('transitions-container');
-
         const transitionDiv = document.createElement('div');
         transitionDiv.className = 'transition';
 
@@ -809,7 +967,6 @@ class AutomataSimulator {
         const inputSymbol = document.createElement('input');
         inputSymbol.type = 'text';
         inputSymbol.className = 'input-symbol';
-        inputSymbol.placeholder = 'Input';
         inputSymbol.value = 'a';
 
         const toStateSelect = document.createElement('select');
@@ -823,37 +980,27 @@ class AutomataSimulator {
         transitionDiv.appendChild(inputSymbol);
         transitionDiv.appendChild(toStateSelect);
         transitionDiv.appendChild(removeButton);
-
         transitionsContainer.appendChild(transitionDiv);
 
-        removeButton.addEventListener('click', () => {
-            transitionDiv.remove();
-        });
-
+        removeButton.addEventListener('click', () => transitionDiv.remove());
         this.updateStateSelectors();
     }
 
     updateStateSelectors() {
         const stateInputs = document.querySelectorAll('.state input[type="text"]');
         const stateNames = Array.from(stateInputs).map(input => input.value);
+        const allSelectors = [...document.querySelectorAll('.from-state'), ...document.querySelectorAll('.to-state')];
 
-        const fromStateSelectors = document.querySelectorAll('.from-state');
-        const toStateSelectors = document.querySelectorAll('.to-state');
-
-        [...fromStateSelectors, ...toStateSelectors].forEach(selector => {
+        allSelectors.forEach(selector => {
             const currentValue = selector.value;
             selector.innerHTML = '';
-
-            stateNames.forEach(stateName => {
+            stateNames.forEach(name => {
                 const option = document.createElement('option');
-                option.value = stateName;
-                option.textContent = stateName;
+                option.value = name;
+                option.textContent = name;
                 selector.appendChild(option);
             });
-
-            if (stateNames.includes(currentValue)) {
-                selector.value = currentValue;
-            }
+            if (stateNames.includes(currentValue)) selector.value = currentValue;
         });
     }
 
@@ -861,8 +1008,8 @@ class AutomataSimulator {
         this.automaton = {
             type: 'fa',
             states: [
-                { name: 'q0', initial: true, final: false, position: new THREE.Vector3(-5, 0, 0) },
-                { name: 'q1', initial: false, final: true, position: new THREE.Vector3(5, 0, 0) }
+                { name: 'q0', initial: true, final: false, position: new THREE.Vector3(-4, 0, 0) },
+                { name: 'q1', initial: false, final: true, position: new THREE.Vector3(4, 0, 0) }
             ],
             transitions: [
                 { from: 'q0', to: 'q0', input: 'b' },
@@ -871,785 +1018,167 @@ class AutomataSimulator {
                 { from: 'q1', to: 'q1', input: 'a' }
             ]
         };
-
         this.visualizeAutomaton();
     }
 
     createCustomAutomaton() {
-        try {
-            this.clearScene();
-            this.addSceneElements();
+        this.clearScene();
 
-            const automatonType = document.getElementById('automaton-type').value;
-
-            const stateElements = document.querySelectorAll('.state');
-            const states = Array.from(stateElements).map((element, index) => {
-                const name = element.querySelector('input[type="text"]').value;
-                const initial = element.querySelectorAll('input[type="checkbox"]')[0].checked;
-                const final = element.querySelectorAll('input[type="checkbox"]')[1].checked;
-
-                const angle = (index / stateElements.length) * Math.PI * 2;
-                const radius = 5;
-                const x = radius * Math.cos(angle);
-                const z = radius * Math.sin(angle);
-
-                return {
-                    name,
-                    initial,
-                    final,
-                    position: new THREE.Vector3(x, 0, z)
-                };
-            });
-
-            const transitionElements = document.querySelectorAll('.transition');
-            const transitions = Array.from(transitionElements).map(element => {
-                return {
-                    from: element.querySelector('.from-state').value,
-                    to: element.querySelector('.to-state').value,
-                    input: element.querySelector('.input-symbol').value
-                };
-            });
-
-            this.automaton = {
-                type: automatonType,
-                states,
-                transitions
+        const automatonType = document.getElementById('automaton-type').value;
+        const stateElements = document.querySelectorAll('.state');
+        const states = Array.from(stateElements).map((element, index) => {
+            const name = element.querySelector('input[type="text"]').value;
+            const initial = element.querySelectorAll('input[type="checkbox"]')[0].checked;
+            const final = element.querySelectorAll('input[type="checkbox"]')[1].checked;
+            const angle = (index / stateElements.length) * Math.PI * 2;
+            const radius = 4;
+            return {
+                name, initial, final,
+                position: new THREE.Vector3(radius * Math.cos(angle), 0, radius * Math.sin(angle))
             };
+        });
 
-            this.visualizeAutomaton();
-            this.resetSimulation();
-        } catch (error) {
-            console.error("Error creating automaton:", error);
-            alert(`Error creating automaton: ${error.message}`);
-        }
+        const transitionElements = document.querySelectorAll('.transition');
+        const transitions = Array.from(transitionElements).map(element => ({
+            from: element.querySelector('.from-state').value,
+            to: element.querySelector('.to-state').value,
+            input: element.querySelector('.input-symbol').value
+        }));
+
+        this.automaton = { type: automatonType, states, transitions };
+        this.visualizeAutomaton();
+        this.resetSimulation();
     }
 
     clearScene() {
-        // Remove only automaton objects, keep environment
         const objectsToRemove = [];
-        this.scene.traverse((child) => {
-            if (child.userData.isAutomatonObject) {
-                objectsToRemove.push(child);
-            }
+        this.scene.traverse(child => {
+            if (child.userData.isAutomatonObject) objectsToRemove.push(child);
         });
 
         objectsToRemove.forEach(obj => {
             this.scene.remove(obj);
             if (obj.geometry) obj.geometry.dispose();
             if (obj.material) {
-                if (Array.isArray(obj.material)) {
-                    obj.material.forEach(m => m.dispose());
-                } else {
-                    obj.material.dispose();
-                }
+                if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+                else obj.material.dispose();
             }
         });
 
-        // Clear particle systems
         this.particleSystems.forEach(ps => {
             this.scene.remove(ps);
             if (ps.geometry) ps.geometry.dispose();
             if (ps.material) ps.material.dispose();
         });
         this.particleSystems = [];
-
         this.dataPackets = [];
         this.activeAnimations = [];
-    }
-
-    addSceneElements() {
-        // Scene elements are preserved, no need to re-add
-    }
-
-    createTextSprite(text, color) {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = 256;
-        canvas.height = 128;
-
-        // Add subtle glow effect
-        context.shadowColor = color || '#ffffff';
-        context.shadowBlur = 10;
-
-        context.font = 'bold 48px Arial';
-        context.fillStyle = color || '#ffffff';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.fillText(text, canvas.width / 2, canvas.height / 2);
-
-        const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.SpriteMaterial({
-            map: texture,
-            transparent: true,
-            depthTest: false
-        });
-
-        const sprite = new THREE.Sprite(material);
-        sprite.userData.isAutomatonObject = true;
-        return sprite;
-    }
-
-    // Create realistic PBR state sphere
-    createStateSphere(state) {
-        const group = new THREE.Group();
-        group.userData.isAutomatonObject = true;
-
-        // Determine colors based on state type
-        let baseColor, emissiveColor, emissiveIntensity;
-        if (state.final) {
-            baseColor = 0x00ff88;
-            emissiveColor = 0x00ff88;
-            emissiveIntensity = 0.3;
-        } else if (state.initial) {
-            baseColor = 0x4488ff;
-            emissiveColor = 0x4488ff;
-            emissiveIntensity = 0.3;
-        } else {
-            baseColor = 0xccccdd;
-            emissiveColor = 0x666688;
-            emissiveIntensity = 0.1;
-        }
-
-        // Main sphere with PBR material
-        const geometry = new THREE.SphereGeometry(0.8, 64, 64);
-        const material = new THREE.MeshStandardMaterial({
-            color: baseColor,
-            metalness: 0.7,
-            roughness: 0.2,
-            emissive: emissiveColor,
-            emissiveIntensity: emissiveIntensity
-        });
-
-        const sphere = new THREE.Mesh(geometry, material);
-        sphere.castShadow = true;
-        sphere.receiveShadow = true;
-        group.add(sphere);
-
-        // Inner glow sphere
-        const glowGeometry = new THREE.SphereGeometry(0.85, 32, 32);
-        const glowMaterial = new THREE.MeshBasicMaterial({
-            color: baseColor,
-            transparent: true,
-            opacity: 0.15,
-            side: THREE.BackSide
-        });
-        const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
-        group.add(glowSphere);
-
-        // Outer glow for bloom effect
-        const outerGlowGeometry = new THREE.SphereGeometry(1.1, 32, 32);
-        const outerGlowMaterial = new THREE.MeshBasicMaterial({
-            color: baseColor,
-            transparent: true,
-            opacity: 0.08,
-            side: THREE.BackSide
-        });
-        const outerGlowSphere = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
-        group.add(outerGlowSphere);
-
-        // Add ring for final states
-        if (state.final) {
-            const ringGeometry = new THREE.TorusGeometry(1.15, 0.06, 16, 64);
-            const ringMaterial = new THREE.MeshStandardMaterial({
-                color: 0x00ff88,
-                metalness: 0.9,
-                roughness: 0.1,
-                emissive: 0x00ff88,
-                emissiveIntensity: 0.5
-            });
-            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            ring.rotation.x = Math.PI / 2;
-            ring.castShadow = true;
-            group.add(ring);
-        }
-
-        // Add arrow indicator for initial state
-        if (state.initial) {
-            const arrowGroup = new THREE.Group();
-
-            // Arrow shaft
-            const shaftGeometry = new THREE.CylinderGeometry(0.08, 0.08, 1.5, 16);
-            const shaftMaterial = new THREE.MeshStandardMaterial({
-                color: 0x4488ff,
-                metalness: 0.8,
-                roughness: 0.2,
-                emissive: 0x4488ff,
-                emissiveIntensity: 0.3
-            });
-            const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
-            shaft.rotation.z = Math.PI / 2;
-            shaft.position.x = -2;
-            arrowGroup.add(shaft);
-
-            // Arrow head
-            const headGeometry = new THREE.ConeGeometry(0.2, 0.4, 16);
-            const headMaterial = new THREE.MeshStandardMaterial({
-                color: 0x4488ff,
-                metalness: 0.8,
-                roughness: 0.2,
-                emissive: 0x4488ff,
-                emissiveIntensity: 0.3
-            });
-            const head = new THREE.Mesh(headGeometry, headMaterial);
-            head.rotation.z = -Math.PI / 2;
-            head.position.x = -1.1;
-            arrowGroup.add(head);
-
-            group.add(arrowGroup);
-        }
-
-        group.position.copy(state.position);
-
-        return {
-            group,
-            sphere,
-            glowSphere,
-            outerGlowSphere,
-            baseColor,
-            emissiveColor
-        };
-    }
-
-    // Create curved transition with Bezier curves
-    createTransitionCurve(fromPos, toPos, isSelfLoop = false) {
-        if (isSelfLoop) {
-            // Create a nice loop above the state
-            const loopRadius = 1.0;
-            const loopHeight = 1.5;
-            const points = [];
-
-            for (let i = 0; i <= 40; i++) {
-                const t = i / 40;
-                const angle = Math.PI + t * Math.PI * 1.5;
-                const x = fromPos.x + loopRadius * Math.cos(angle);
-                const y = fromPos.y + loopHeight + 0.5 * Math.sin(t * Math.PI);
-                const z = fromPos.z + loopRadius * Math.sin(angle);
-                points.push(new THREE.Vector3(x, y, z));
-            }
-
-            return points;
-        }
-
-        // Create curved path between states
-        const midPoint = new THREE.Vector3().addVectors(fromPos, toPos).multiplyScalar(0.5);
-        const direction = new THREE.Vector3().subVectors(toPos, fromPos);
-        const distance = direction.length();
-
-        // Calculate perpendicular offset for curve
-        const perpendicular = new THREE.Vector3(-direction.z, 0, direction.x).normalize();
-        const curveHeight = distance * 0.15;
-
-        // Control point for quadratic bezier
-        const controlPoint = midPoint.clone();
-        controlPoint.y += curveHeight;
-        controlPoint.add(perpendicular.multiplyScalar(curveHeight * 0.3));
-
-        // Generate curve points
-        const curve = new THREE.QuadraticBezierCurve3(fromPos, controlPoint, toPos);
-        const points = curve.getPoints(40);
-
-        // Trim end to not overlap with target state
-        const trimmedPoints = [];
-        for (let i = 0; i < points.length; i++) {
-            const distToEnd = points[i].distanceTo(toPos);
-            if (distToEnd > 0.9) {
-                trimmedPoints.push(points[i]);
-            }
-        }
-
-        return trimmedPoints;
-    }
-
-    visualizeAutomaton() {
-        try {
-            this.stateObjects = {};
-            this.transitionObjects = [];
-
-            // Create states
-            this.automaton.states.forEach(state => {
-                const stateVisual = this.createStateSphere(state);
-                this.scene.add(stateVisual.group);
-
-                // Add state name label
-                const textSprite = this.createTextSprite(state.name, '#ffffff');
-                textSprite.position.set(state.position.x, state.position.y + 1.8, state.position.z);
-                textSprite.scale.set(1.5, 0.75, 1);
-                this.scene.add(textSprite);
-
-                this.stateObjects[state.name] = {
-                    ...stateVisual,
-                    textSprite,
-                    position: state.position.clone(),
-                    state: state
-                };
-            });
-
-            // Create transitions
-            this.automaton.transitions.forEach(transition => {
-                const fromState = this.automaton.states.find(s => s.name === transition.from);
-                const toState = this.automaton.states.find(s => s.name === transition.to);
-
-                if (!fromState || !toState) return;
-
-                const isSelfLoop = fromState.name === toState.name;
-                const points = this.createTransitionCurve(fromState.position, toState.position, isSelfLoop);
-
-                // Create tube geometry for transition
-                const curve = new THREE.CatmullRomCurve3(points);
-                const tubeGeometry = new THREE.TubeGeometry(curve, 64, 0.04, 8, false);
-                const tubeMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xff8844,
-                    metalness: 0.6,
-                    roughness: 0.3,
-                    emissive: 0xff6622,
-                    emissiveIntensity: 0.2,
-                    transparent: true,
-                    opacity: 0.9
-                });
-
-                const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
-                tubeMesh.userData.isAutomatonObject = true;
-                tubeMesh.castShadow = true;
-                this.scene.add(tubeMesh);
-
-                // Add arrow head
-                let arrowHead = null;
-                if (points.length >= 2) {
-                    const lastPoint = points[points.length - 1];
-                    const secondLastPoint = points[points.length - 2];
-                    const direction = new THREE.Vector3().subVectors(lastPoint, secondLastPoint).normalize();
-
-                    const coneGeometry = new THREE.ConeGeometry(0.15, 0.35, 16);
-                    const coneMaterial = new THREE.MeshStandardMaterial({
-                        color: 0xff8844,
-                        metalness: 0.6,
-                        roughness: 0.3,
-                        emissive: 0xff6622,
-                        emissiveIntensity: 0.3
-                    });
-
-                    arrowHead = new THREE.Mesh(coneGeometry, coneMaterial);
-                    arrowHead.userData.isAutomatonObject = true;
-                    arrowHead.position.copy(lastPoint);
-                    arrowHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
-                    arrowHead.castShadow = true;
-                    this.scene.add(arrowHead);
-                }
-
-                // Add transition label
-                const labelPos = points[Math.floor(points.length / 2)].clone();
-                labelPos.y += 0.5;
-
-                const textSprite = this.createTextSprite(transition.input, '#ffaa66');
-                textSprite.position.copy(labelPos);
-                textSprite.scale.set(1.2, 0.6, 1);
-                this.scene.add(textSprite);
-
-                this.transitionObjects.push({
-                    from: transition.from,
-                    to: transition.to,
-                    input: transition.input,
-                    tube: tubeMesh,
-                    arrow: arrowHead,
-                    textSprite,
-                    points,
-                    selfTransition: isSelfLoop,
-                    originalColor: 0xff8844,
-                    originalEmissive: 0xff6622
-                });
-            });
-
-            this.updateInfoDisplay();
-        } catch (error) {
-            console.error("Error visualizing automaton:", error);
-            alert(`Error visualizing automaton: ${error.message}`);
-        }
     }
 
     updateInfoDisplay() {
         const type = this.automaton.type;
         const infoElement = document.getElementById('simulation-info');
-
-        let typeName = 'Finite Automaton';
-        if (type === 'pda') typeName = 'Pushdown Automaton';
-        if (type === 'tm') typeName = 'Turing Machine';
-
+        let typeName = type === 'pda' ? 'Pushdown Automaton' : type === 'tm' ? 'Turing Machine' : 'Finite Automaton';
         const stateCount = this.automaton.states.length;
         const acceptingCount = this.automaton.states.filter(s => s.final).length;
         const transitionCount = this.automaton.transitions.length;
-
         infoElement.innerHTML = `${typeName} with ${stateCount} states (${acceptingCount} accepting) and ${transitionCount} transitions`;
     }
 
     resetSimulation() {
-        try {
-            // Remove all data packets
-            for (let i = this.dataPackets.length - 1; i >= 0; i--) {
-                const packet = this.dataPackets[i];
-                if (packet.group && packet.group.parent) {
-                    packet.group.parent.remove(packet.group);
-                }
+        this.dataPackets.forEach(packet => {
+            if (packet.group && packet.group.parent) packet.group.parent.remove(packet.group);
+        });
+        this.dataPackets = [];
+        this.activeAnimations = [];
+
+        this.particleSystems.forEach(ps => this.scene.remove(ps));
+        this.particleSystems = [];
+
+        Object.values(this.stateObjects).forEach(stateObj => {
+            const state = stateObj.state;
+            let colorSet;
+            if (state.final) colorSet = this.colors.final;
+            else if (state.initial) colorSet = this.colors.initial;
+            else colorSet = this.colors.regular;
+
+            stateObj.sphere.material.color.setHex(colorSet.base);
+            stateObj.sphere.material.emissive.setHex(colorSet.emissive);
+            stateObj.sphere.material.emissiveIntensity = 0.15;
+            stateObj.glowSphere.material.color.setHex(colorSet.glow);
+            stateObj.glowSphere.material.opacity = 0.1;
+        });
+
+        this.transitionObjects.forEach(transObj => {
+            transObj.tube.material.color.setHex(this.colors.transition.base);
+            transObj.tube.material.emissive.setHex(this.colors.transition.emissive);
+            transObj.tube.material.emissiveIntensity = 0.15;
+            transObj.tube.material.opacity = 0.85;
+            if (transObj.arrow) {
+                transObj.arrow.material.color.setHex(this.colors.transition.base);
+                transObj.arrow.material.emissive.setHex(this.colors.transition.emissive);
+                transObj.arrow.material.emissiveIntensity = 0.2;
             }
-            this.dataPackets = [];
-            this.activeAnimations = [];
+        });
 
-            // Clear particle systems
-            this.particleSystems.forEach(ps => {
-                this.scene.remove(ps);
-            });
-            this.particleSystems = [];
+        this.simulationRunning = false;
+        this.stepMode = false;
+        this.simulationStep = 0;
+        this.currentState = this.automaton.states.find(s => s.initial);
+        this.inputString = document.getElementById('input-string').value;
+        this.inputIndex = 0;
 
-            // Reset all states to their original colors
-            Object.values(this.stateObjects).forEach(stateObj => {
-                const state = stateObj.state;
-                let baseColor;
-                if (state.final) {
-                    baseColor = 0x00ff88;
-                } else if (state.initial) {
-                    baseColor = 0x4488ff;
-                } else {
-                    baseColor = 0xccccdd;
-                }
+        document.getElementById('run-simulation').disabled = false;
+        document.getElementById('step-simulation').disabled = false;
 
-                stateObj.sphere.material.color.setHex(baseColor);
-                stateObj.sphere.material.emissive.setHex(baseColor);
-                stateObj.sphere.material.emissiveIntensity = state.final ? 0.3 : (state.initial ? 0.3 : 0.1);
-                stateObj.glowSphere.material.color.setHex(baseColor);
-                stateObj.glowSphere.material.opacity = 0.15;
-                stateObj.outerGlowSphere.material.color.setHex(baseColor);
-                stateObj.outerGlowSphere.material.opacity = 0.08;
-            });
+        this.stack = [];
+        document.getElementById('simulation-stack').textContent = 'Stack: []';
 
-            // Reset all transitions
-            this.transitionObjects.forEach(transObj => {
-                transObj.tube.material.color.setHex(transObj.originalColor);
-                transObj.tube.material.emissive.setHex(transObj.originalEmissive);
-                transObj.tube.material.emissiveIntensity = 0.2;
-                transObj.tube.material.opacity = 0.9;
-                if (transObj.arrow) {
-                    transObj.arrow.material.color.setHex(transObj.originalColor);
-                    transObj.arrow.material.emissive.setHex(transObj.originalEmissive);
-                }
-            });
+        this.tape = this.inputString.split('');
+        this.headPosition = 0;
+        document.getElementById('simulation-tape').textContent = `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
 
-            this.simulationRunning = false;
-            this.stepMode = false;
-            this.simulationStep = 0;
-            this.currentState = this.automaton.states.find(s => s.initial);
-            this.inputString = document.getElementById('input-string').value;
-            this.inputIndex = 0;
-
-            document.getElementById('run-simulation').disabled = false;
-            document.getElementById('step-simulation').disabled = false;
-
-            this.stack = [];
-            document.getElementById('simulation-stack').textContent = 'Stack: []';
-
-            this.tape = this.inputString.split('');
-            this.headPosition = 0;
-            document.getElementById('simulation-tape').textContent =
-                `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
-
-            document.getElementById('simulation-status').textContent = 'Ready';
-            document.getElementById('debug-panel').style.display = 'none';
-        } catch (error) {
-            console.error("Error resetting simulation:", error);
-        }
+        document.getElementById('simulation-status').textContent = 'Ready';
+        document.getElementById('debug-panel').style.display = 'none';
     }
 
     runSimulation() {
-        try {
-            this.resetSimulation();
-            this.stepMode = false;
-            this.simulationRunning = true;
-            this.animateSimulation();
-        } catch (error) {
-            console.error("Error running simulation:", error);
-        }
+        this.resetSimulation();
+        this.stepMode = false;
+        this.simulationRunning = true;
+        this.animateSimulation();
     }
 
     stepSimulation() {
-        try {
-            if (!this.simulationRunning && !this.stepMode) {
-                this.resetSimulation();
-            }
+        if (!this.simulationRunning && !this.stepMode) this.resetSimulation();
+        if (this.activeAnimations.length > 0) return;
 
-            if (this.activeAnimations.length > 0) {
-                return;
-            }
+        this.stepMode = true;
+        this.simulationRunning = false;
+        this.updateDebugInfo();
 
-            this.stepMode = true;
-            this.simulationRunning = false;
+        document.getElementById('step-simulation').disabled = true;
+        document.getElementById('run-simulation').disabled = true;
+        document.getElementById('simulation-status').textContent = `Step ${this.simulationStep + 1}`;
 
-            this.updateDebugInfo();
-
-            document.getElementById('step-simulation').disabled = true;
-            document.getElementById('run-simulation').disabled = true;
-
-            document.getElementById('simulation-status').textContent =
-                `Step Mode - Processing step ${this.simulationStep + 1}`;
-
-            this.processNextInput();
-        } catch (error) {
-            console.error("Error stepping simulation:", error);
-            document.getElementById('step-simulation').disabled = false;
-            document.getElementById('run-simulation').disabled = false;
-        }
+        this.processNextInput();
     }
 
     processNextInput() {
-        try {
-            if (this.stepMode) {
-                this.simulationStep++;
-            }
+        if (this.stepMode) this.simulationStep++;
 
-            this.activeAnimations = this.activeAnimations.filter(anim => {
-                const time = Date.now();
-                return anim.update(time);
-            });
+        this.activeAnimations = this.activeAnimations.filter(anim => anim.update(Date.now()));
 
-            if (this.automaton.type === 'fa') {
-                this.processFiniteAutomaton();
-            } else if (this.automaton.type === 'pda') {
-                this.processPushdownAutomaton();
-            } else if (this.automaton.type === 'tm') {
-                this.processTuringMachine();
-            }
-        } catch (error) {
-            console.error("Error processing input:", error);
-            document.getElementById('simulation-status').textContent = `Error: ${error.message}`;
-            this.simulationRunning = false;
-            this.stepMode = false;
-            document.getElementById('step-simulation').disabled = false;
-            document.getElementById('run-simulation').disabled = false;
-        }
-    }
-
-    // Create realistic data packet with particle trail
-    createDataPacket(position, inputSymbol) {
-        const group = new THREE.Group();
-        group.userData.isAutomatonObject = true;
-
-        // Core sphere
-        const coreGeometry = new THREE.SphereGeometry(0.25, 32, 32);
-        const coreMaterial = new THREE.MeshStandardMaterial({
-            color: 0xff4444,
-            metalness: 0.8,
-            roughness: 0.1,
-            emissive: 0xff2222,
-            emissiveIntensity: 0.8
-        });
-        const core = new THREE.Mesh(coreGeometry, coreMaterial);
-        group.add(core);
-
-        // Inner glow
-        const innerGlowGeometry = new THREE.SphereGeometry(0.35, 16, 16);
-        const innerGlowMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff6666,
-            transparent: true,
-            opacity: 0.4,
-            side: THREE.BackSide
-        });
-        const innerGlow = new THREE.Mesh(innerGlowGeometry, innerGlowMaterial);
-        group.add(innerGlow);
-
-        // Outer glow for bloom
-        const outerGlowGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const outerGlowMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff4444,
-            transparent: true,
-            opacity: 0.2,
-            side: THREE.BackSide
-        });
-        const outerGlow = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
-        group.add(outerGlow);
-
-        // Label
-        const labelSprite = this.createTextSprite(inputSymbol, '#ffffff');
-        labelSprite.scale.set(0.6, 0.3, 1);
-        labelSprite.position.y = 0.6;
-        group.add(labelSprite);
-
-        group.position.copy(position);
-        this.scene.add(group);
-
-        // Create particle trail system
-        const trailParticles = this.createParticleTrail();
-        this.scene.add(trailParticles);
-        this.particleSystems.push(trailParticles);
-
-        return {
-            group,
-            core,
-            innerGlow,
-            outerGlow,
-            label: labelSprite,
-            trail: trailParticles,
-            trailPositions: [],
-            inputSymbol
-        };
-    }
-
-    createParticleTrail() {
-        const particleCount = 50;
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-        const colors = new Float32Array(particleCount * 3);
-        const sizes = new Float32Array(particleCount);
-        const alphas = new Float32Array(particleCount);
-
-        for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] = 0;
-            positions[i * 3 + 1] = -1000; // Hidden initially
-            positions[i * 3 + 2] = 0;
-
-            colors[i * 3] = 1.0;
-            colors[i * 3 + 1] = 0.3;
-            colors[i * 3 + 2] = 0.2;
-
-            sizes[i] = 0.1 * (1 - i / particleCount);
-            alphas[i] = 1 - i / particleCount;
-        }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-        const material = new THREE.PointsMaterial({
-            size: 0.15,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.8,
-            sizeAttenuation: true,
-            blending: THREE.AdditiveBlending
-        });
-
-        return new THREE.Points(geometry, material);
-    }
-
-    updateParticleTrail(packet, currentPosition) {
-        if (!packet.trail) return;
-
-        // Add current position to trail
-        packet.trailPositions.unshift(currentPosition.clone());
-
-        // Limit trail length
-        if (packet.trailPositions.length > 50) {
-            packet.trailPositions.pop();
-        }
-
-        // Update particle positions
-        const positions = packet.trail.geometry.attributes.position.array;
-
-        for (let i = 0; i < packet.trailPositions.length && i < 50; i++) {
-            const pos = packet.trailPositions[i];
-            positions[i * 3] = pos.x;
-            positions[i * 3 + 1] = pos.y;
-            positions[i * 3 + 2] = pos.z;
-        }
-
-        packet.trail.geometry.attributes.position.needsUpdate = true;
-    }
-
-    animateDataPacket(packet, points, duration, onComplete) {
-        const self = this;
-
-        const animation = {
-            packet: packet,
-            points: points,
-            startTime: Date.now(),
-            duration: duration,
-            onComplete: () => {
-                const index = self.activeAnimations.indexOf(animation);
-                if (index > -1) {
-                    self.activeAnimations.splice(index, 1);
-                }
-
-                self.updateDebugInfo();
-
-                if (self.inputIndex < self.inputString.length) {
-                    document.getElementById('step-simulation').disabled = false;
-                }
-
-                if (onComplete) onComplete();
-            },
-            update: function(time) {
-                const elapsed = time - this.startTime;
-                const rawProgress = Math.min(elapsed / this.duration, 1);
-
-                // Apply easing
-                const progress = self.easeInOutCubic(rawProgress);
-
-                if (points && points.length > 1) {
-                    const pointIndex = Math.floor(progress * (points.length - 1));
-                    const fraction = progress * (points.length - 1) - pointIndex;
-
-                    if (pointIndex < points.length - 1) {
-                        const p1 = points[pointIndex];
-                        const p2 = points[pointIndex + 1];
-                        packet.group.position.lerpVectors(p1, p2, fraction);
-
-                        // Update particle trail
-                        self.updateParticleTrail(packet, packet.group.position);
-                    }
-                }
-
-                // Pulsate effects
-                const pulseScale = 1 + 0.15 * Math.sin(rawProgress * Math.PI * 8);
-                packet.innerGlow.scale.setScalar(pulseScale);
-                packet.outerGlow.scale.setScalar(pulseScale * 1.2);
-
-                // Rotate core slightly
-                packet.core.rotation.y += 0.05;
-                packet.core.rotation.x += 0.02;
-
-                if (rawProgress === 1) {
-                    this.onComplete();
-                }
-
-                return rawProgress < 1;
-            }
-        };
-
-        this.dataPackets.push(packet);
-        this.activeAnimations.push(animation);
-
-        return animation;
-    }
-
-    highlightState(stateName, color, intensity = 0.5) {
-        const stateObj = this.stateObjects[stateName];
-        if (!stateObj) return;
-
-        stateObj.sphere.material.color.setHex(color);
-        stateObj.sphere.material.emissive.setHex(color);
-        stateObj.sphere.material.emissiveIntensity = intensity;
-        stateObj.glowSphere.material.color.setHex(color);
-        stateObj.glowSphere.material.opacity = 0.3;
-        stateObj.outerGlowSphere.material.color.setHex(color);
-        stateObj.outerGlowSphere.material.opacity = 0.15;
-    }
-
-    highlightTransition(transObj, color) {
-        transObj.tube.material.color.setHex(color);
-        transObj.tube.material.emissive.setHex(color);
-        transObj.tube.material.emissiveIntensity = 0.5;
-        transObj.tube.material.opacity = 1.0;
-        if (transObj.arrow) {
-            transObj.arrow.material.color.setHex(color);
-            transObj.arrow.material.emissive.setHex(color);
-            transObj.arrow.material.emissiveIntensity = 0.5;
-        }
+        if (this.automaton.type === 'fa') this.processFiniteAutomaton();
+        else if (this.automaton.type === 'pda') this.processPushdownAutomaton();
+        else if (this.automaton.type === 'tm') this.processTuringMachine();
     }
 
     processFiniteAutomaton() {
         if (this.inputIndex >= this.inputString.length) {
             const isFinalState = this.currentState.final;
-            document.getElementById('simulation-status').textContent =
-                isFinalState ? 'Accepted ✓' : 'Rejected ✗';
-
-            this.highlightState(this.currentState.name, isFinalState ? 0x00ff88 : 0xff4444, 0.6);
-
+            document.getElementById('simulation-status').textContent = isFinalState ? 'Accepted ✓' : 'Rejected ✗';
+            this.highlightState(this.currentState.name, isFinalState ? this.colors.final : this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
             document.getElementById('run-simulation').disabled = false;
@@ -1657,72 +1186,53 @@ class AutomataSimulator {
         }
 
         const currentInput = this.inputString[this.inputIndex];
-        document.getElementById('simulation-status').textContent =
-            `Processing "${currentInput}" (${this.inputIndex + 1}/${this.inputString.length})`;
+        document.getElementById('simulation-status').textContent = `Processing "${currentInput}" (${this.inputIndex + 1}/${this.inputString.length})`;
 
-        const transition = this.automaton.transitions.find(t =>
-            t.from === this.currentState.name && t.input === currentInput
-        );
+        const transition = this.automaton.transitions.find(t => t.from === this.currentState.name && t.input === currentInput);
 
         if (!transition) {
-            document.getElementById('simulation-status').textContent =
-                `Rejected: No transition for "${currentInput}" from ${this.currentState.name}`;
-
-            this.highlightState(this.currentState.name, 0xff4444, 0.6);
-
+            document.getElementById('simulation-status').textContent = `Rejected: No transition for "${currentInput}"`;
+            this.highlightState(this.currentState.name, this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
             document.getElementById('run-simulation').disabled = false;
             return;
         }
 
-        const transObj = this.transitionObjects.find(t =>
-            t.from === transition.from && t.to === transition.to && t.input === transition.input
-        );
+        const transObj = this.transitionObjects.find(t => t.from === transition.from && t.to === transition.to && t.input === transition.input);
 
         if (transObj) {
-            this.highlightTransition(transObj, 0xff6666);
-
+            this.highlightTransition(transObj);
             const fromStateObj = this.stateObjects[transition.from];
             const packet = this.createDataPacket(fromStateObj.position.clone(), currentInput);
 
-            this.animateDataPacket(
-                packet,
-                transObj.points,
-                this.animationSpeed,
-                () => {
-                    const nextState = this.automaton.states.find(s => s.name === transition.to);
-                    this.currentState = nextState;
+            this.animateDataPacket(packet, transObj.points, this.animationSpeed, () => {
+                const nextState = this.automaton.states.find(s => s.name === transition.to);
+                this.currentState = nextState;
+                this.highlightState(nextState.name, this.colors.current, 0.35);
 
-                    this.highlightState(nextState.name, 0xffcc00, 0.5);
-
-                    // Clean up packet
-                    this.scene.remove(packet.group);
-                    if (packet.trail) {
-                        this.scene.remove(packet.trail);
-                        const idx = this.particleSystems.indexOf(packet.trail);
-                        if (idx > -1) this.particleSystems.splice(idx, 1);
-                    }
-                    this.dataPackets = this.dataPackets.filter(p => p !== packet);
-
-                    this.inputIndex++;
-
-                    if (this.simulationRunning && !this.stepMode) {
-                        setTimeout(() => this.processNextInput(), 300);
-                    }
+                this.scene.remove(packet.group);
+                if (packet.trail) {
+                    this.scene.remove(packet.trail);
+                    const idx = this.particleSystems.indexOf(packet.trail);
+                    if (idx > -1) this.particleSystems.splice(idx, 1);
                 }
-            );
+                this.dataPackets = this.dataPackets.filter(p => p !== packet);
+
+                this.inputIndex++;
+
+                if (this.simulationRunning && !this.stepMode) {
+                    setTimeout(() => this.processNextInput(), 200);
+                }
+            });
         }
     }
 
     processPushdownAutomaton() {
         if (this.inputIndex >= this.inputString.length) {
             const isFinalState = this.currentState.final;
-            document.getElementById('simulation-status').textContent =
-                isFinalState ? 'Accepted ✓' : 'Rejected ✗';
-
-            this.highlightState(this.currentState.name, isFinalState ? 0x00ff88 : 0xff4444, 0.6);
-
+            document.getElementById('simulation-status').textContent = isFinalState ? 'Accepted ✓' : 'Rejected ✗';
+            this.highlightState(this.currentState.name, isFinalState ? this.colors.final : this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
             document.getElementById('run-simulation').disabled = false;
@@ -1730,336 +1240,210 @@ class AutomataSimulator {
         }
 
         const currentInput = this.inputString[this.inputIndex];
-        document.getElementById('simulation-status').textContent =
-            `Processing: "${currentInput}" with stack top: ${this.stack.length > 0 ? this.stack[this.stack.length - 1] : 'ε'}`;
+        document.getElementById('simulation-status').textContent = `Processing "${currentInput}"`;
 
         let validTransitions = [];
         let epsilonTransitions = [];
 
         this.automaton.transitions.forEach(transition => {
             if (transition.from !== this.currentState.name) return;
-
             const parts = transition.input.split(',');
             if (parts.length !== 2) return;
-
             const [inputSymbol, stackOp] = parts;
             const [popSymbol, pushSymbol] = stackOp.split('→');
 
             if (inputSymbol === 'ε') {
                 if (popSymbol === 'ε' || (this.stack.length > 0 && this.stack[this.stack.length - 1] === popSymbol)) {
-                    epsilonTransitions.push({
-                        transition,
-                        popSymbol: popSymbol === 'ε' ? '' : popSymbol,
-                        pushSymbol: pushSymbol === 'ε' ? '' : pushSymbol
-                    });
+                    epsilonTransitions.push({ transition, popSymbol: popSymbol === 'ε' ? '' : popSymbol, pushSymbol: pushSymbol === 'ε' ? '' : pushSymbol });
                 }
             } else if (inputSymbol === currentInput) {
                 if (popSymbol === 'ε' || (this.stack.length > 0 && this.stack[this.stack.length - 1] === popSymbol)) {
-                    validTransitions.push({
-                        transition,
-                        popSymbol: popSymbol === 'ε' ? '' : popSymbol,
-                        pushSymbol: pushSymbol === 'ε' ? '' : pushSymbol
-                    });
+                    validTransitions.push({ transition, popSymbol: popSymbol === 'ε' ? '' : popSymbol, pushSymbol: pushSymbol === 'ε' ? '' : pushSymbol });
                 }
             }
         });
 
-        const chosenTransition = validTransitions.length > 0 ? validTransitions[0] :
-                                epsilonTransitions.length > 0 ? epsilonTransitions[0] : null;
+        const chosenTransition = validTransitions.length > 0 ? validTransitions[0] : epsilonTransitions.length > 0 ? epsilonTransitions[0] : null;
 
         if (!chosenTransition) {
-            document.getElementById('simulation-status').textContent = 'Rejected: No valid transition found';
-
-            this.highlightState(this.currentState.name, 0xff4444, 0.6);
-
+            document.getElementById('simulation-status').textContent = 'Rejected: No valid transition';
+            this.highlightState(this.currentState.name, this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
             document.getElementById('run-simulation').disabled = false;
             return;
         }
 
-        const transObj = this.transitionObjects.find(t =>
-            t.from === chosenTransition.transition.from &&
-            t.to === chosenTransition.transition.to &&
-            t.input === chosenTransition.transition.input
-        );
+        const transObj = this.transitionObjects.find(t => t.from === chosenTransition.transition.from && t.to === chosenTransition.transition.to && t.input === chosenTransition.transition.input);
 
         if (transObj) {
-            this.highlightTransition(transObj, 0xff6666);
-
+            this.highlightTransition(transObj);
             const fromStateObj = this.stateObjects[chosenTransition.transition.from];
             const displaySymbol = chosenTransition.transition.input.split(',')[0] === 'ε' ? 'ε' : currentInput;
             const packet = this.createDataPacket(fromStateObj.position.clone(), displaySymbol);
 
-            this.animateDataPacket(
-                packet,
-                transObj.points,
-                this.animationSpeed,
-                () => {
-                    if (chosenTransition.popSymbol && this.stack.length > 0) {
-                        this.stack.pop();
-                    }
+            this.animateDataPacket(packet, transObj.points, this.animationSpeed, () => {
+                if (chosenTransition.popSymbol && this.stack.length > 0) this.stack.pop();
+                if (chosenTransition.pushSymbol) this.stack.push(chosenTransition.pushSymbol);
+                document.getElementById('simulation-stack').textContent = `Stack: [${this.stack.join(',')}]`;
 
-                    if (chosenTransition.pushSymbol) {
-                        this.stack.push(chosenTransition.pushSymbol);
-                    }
+                const inputConsumed = chosenTransition.transition.input.split(',')[0] !== 'ε';
+                const nextState = this.automaton.states.find(s => s.name === chosenTransition.transition.to);
+                this.currentState = nextState;
+                this.highlightState(nextState.name, this.colors.current, 0.35);
 
-                    document.getElementById('simulation-stack').textContent = `Stack: [${this.stack.join(',')}]`;
-
-                    const inputConsumed = chosenTransition.transition.input.split(',')[0] !== 'ε';
-
-                    const nextState = this.automaton.states.find(s => s.name === chosenTransition.transition.to);
-                    this.currentState = nextState;
-
-                    this.highlightState(nextState.name, 0xffcc00, 0.5);
-
-                    // Clean up packet
-                    this.scene.remove(packet.group);
-                    if (packet.trail) {
-                        this.scene.remove(packet.trail);
-                        const idx = this.particleSystems.indexOf(packet.trail);
-                        if (idx > -1) this.particleSystems.splice(idx, 1);
-                    }
-                    this.dataPackets = this.dataPackets.filter(p => p !== packet);
-
-                    if (inputConsumed) {
-                        this.inputIndex++;
-                    }
-
-                    if (this.simulationRunning && !this.stepMode) {
-                        setTimeout(() => this.processNextInput(), 300);
-                    }
+                this.scene.remove(packet.group);
+                if (packet.trail) {
+                    this.scene.remove(packet.trail);
+                    const idx = this.particleSystems.indexOf(packet.trail);
+                    if (idx > -1) this.particleSystems.splice(idx, 1);
                 }
-            );
+                this.dataPackets = this.dataPackets.filter(p => p !== packet);
+
+                if (inputConsumed) this.inputIndex++;
+
+                if (this.simulationRunning && !this.stepMode) {
+                    setTimeout(() => this.processNextInput(), 200);
+                }
+            });
         }
     }
 
     processTuringMachine() {
         if (this.currentState.final) {
             document.getElementById('simulation-status').textContent = 'Accepted ✓';
-
-            this.highlightState(this.currentState.name, 0x00ff88, 0.6);
-
+            this.highlightState(this.currentState.name, this.colors.final, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
             document.getElementById('run-simulation').disabled = false;
             return;
         }
 
-        const currentSymbol = this.headPosition < this.tape.length ?
-                            this.tape[this.headPosition] : '_';
+        const currentSymbol = this.headPosition < this.tape.length ? this.tape[this.headPosition] : '_';
+        document.getElementById('simulation-status').textContent = `Processing "${currentSymbol}" at position ${this.headPosition}`;
 
-        document.getElementById('simulation-status').textContent =
-            `Processing: Symbol "${currentSymbol}" at position ${this.headPosition}`;
-
-        const transition = this.automaton.transitions.find(t =>
-            t.from === this.currentState.name &&
-            t.input.startsWith(`${currentSymbol}→`)
-        );
+        const transition = this.automaton.transitions.find(t => t.from === this.currentState.name && t.input.startsWith(`${currentSymbol}→`));
 
         if (!transition) {
-            document.getElementById('simulation-status').textContent =
-                `Halted: No transition for "${currentSymbol}" from ${this.currentState.name}`;
-
-            this.highlightState(this.currentState.name, 0xff4444, 0.6);
-
+            document.getElementById('simulation-status').textContent = `Halted: No transition for "${currentSymbol}"`;
+            this.highlightState(this.currentState.name, this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
             document.getElementById('run-simulation').disabled = false;
             return;
         }
 
-        const transObj = this.transitionObjects.find(t =>
-            t.from === transition.from && t.to === transition.to && t.input === transition.input
-        );
+        const transObj = this.transitionObjects.find(t => t.from === transition.from && t.to === transition.to && t.input === transition.input);
 
         if (transObj) {
-            this.highlightTransition(transObj, 0xff6666);
-
+            this.highlightTransition(transObj);
             const fromStateObj = this.stateObjects[transition.from];
             const packet = this.createDataPacket(fromStateObj.position.clone(), currentSymbol);
-
             const [readWrite, direction] = transition.input.split(',');
             const [, writeSymbol] = readWrite.split('→');
 
-            this.animateDataPacket(
-                packet,
-                transObj.points,
-                this.animationSpeed,
-                () => {
-                    if (this.headPosition >= this.tape.length) {
-                        this.tape.push(writeSymbol);
-                    } else {
-                        this.tape[this.headPosition] = writeSymbol;
-                    }
+            this.animateDataPacket(packet, transObj.points, this.animationSpeed, () => {
+                if (this.headPosition >= this.tape.length) this.tape.push(writeSymbol);
+                else this.tape[this.headPosition] = writeSymbol;
 
-                    if (direction === 'R') {
-                        this.headPosition++;
-                    } else if (direction === 'L') {
-                        this.headPosition = Math.max(0, this.headPosition - 1);
-                    }
+                if (direction === 'R') this.headPosition++;
+                else if (direction === 'L') this.headPosition = Math.max(0, this.headPosition - 1);
 
-                    document.getElementById('simulation-tape').textContent =
-                        `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
+                document.getElementById('simulation-tape').textContent = `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
 
-                    const nextState = this.automaton.states.find(s => s.name === transition.to);
-                    this.currentState = nextState;
+                const nextState = this.automaton.states.find(s => s.name === transition.to);
+                this.currentState = nextState;
+                this.highlightState(nextState.name, this.colors.current, 0.35);
 
-                    this.highlightState(nextState.name, 0xffcc00, 0.5);
-
-                    // Clean up packet
-                    this.scene.remove(packet.group);
-                    if (packet.trail) {
-                        this.scene.remove(packet.trail);
-                        const idx = this.particleSystems.indexOf(packet.trail);
-                        if (idx > -1) this.particleSystems.splice(idx, 1);
-                    }
-                    this.dataPackets = this.dataPackets.filter(p => p !== packet);
-
-                    if (this.simulationRunning && !this.stepMode) {
-                        setTimeout(() => this.processNextInput(), 300);
-                    }
+                this.scene.remove(packet.group);
+                if (packet.trail) {
+                    this.scene.remove(packet.trail);
+                    const idx = this.particleSystems.indexOf(packet.trail);
+                    if (idx > -1) this.particleSystems.splice(idx, 1);
                 }
-            );
+                this.dataPackets = this.dataPackets.filter(p => p !== packet);
+
+                if (this.simulationRunning && !this.stepMode) {
+                    setTimeout(() => this.processNextInput(), 200);
+                }
+            });
         }
     }
 
     animateSimulation() {
-        if (this.simulationRunning) {
-            this.processNextInput();
-        }
+        if (this.simulationRunning) this.processNextInput();
     }
 
     animate() {
         requestAnimationFrame(() => this.animate());
 
         const elapsedTime = this.clock.getElapsedTime();
-        const deltaTime = this.clock.getDelta();
 
-        // Update camera with smooth damping
         this.updateCameraPosition();
 
-        // Update animations
         const time = Date.now();
-        if (this.activeAnimations && this.activeAnimations.length > 0) {
-            for (let i = this.activeAnimations.length - 1; i >= 0; i--) {
-                const animation = this.activeAnimations[i];
-                const isActive = animation.update(time);
-
-                if (!isActive) {
-                    this.activeAnimations.splice(i, 1);
-                }
+        for (let i = this.activeAnimations.length - 1; i >= 0; i--) {
+            if (!this.activeAnimations[i].update(time)) {
+                this.activeAnimations.splice(i, 1);
             }
         }
 
-        // Animate state glows
+        // Subtle glow animation
         if (this.stateObjects) {
             Object.values(this.stateObjects).forEach(stateObj => {
                 if (stateObj.glowSphere) {
-                    const scale = 1.0 + 0.08 * Math.sin(elapsedTime * 2);
+                    const scale = 1.0 + 0.03 * Math.sin(elapsedTime * 1.5);
                     stateObj.glowSphere.scale.setScalar(scale);
                 }
-                if (stateObj.outerGlowSphere) {
-                    const scale = 1.0 + 0.05 * Math.sin(elapsedTime * 1.5 + 0.5);
-                    stateObj.outerGlowSphere.scale.setScalar(scale);
-                }
             });
         }
 
-        // Animate central light
-        if (this.centralLight) {
-            this.centralLight.intensity = 1.5 + 0.3 * Math.sin(elapsedTime * 1.5);
-        }
-
-        // Animate accent lights
-        if (this.accentLights) {
-            this.accentLights.forEach((light, i) => {
-                light.intensity = 0.8 + 0.2 * Math.sin(elapsedTime * 2 + i * Math.PI);
-            });
-        }
-
-        // Slowly rotate starfield
-        if (this.starfield) {
-            this.starfield.rotation.y += 0.0001;
-        }
-
-        // Animate grid opacity
-        if (this.grid) {
-            this.grid.material.opacity = 0.2 + 0.1 * Math.sin(elapsedTime * 0.5);
-        }
-        if (this.gridCross) {
-            this.gridCross.material.opacity = 0.4 + 0.2 * Math.sin(elapsedTime * 0.7);
-        }
-
-        // Render with post-processing
         this.composer.render();
     }
 
     createDebugPanel() {
         const debugPanel = document.createElement('div');
         debugPanel.id = 'debug-panel';
-        debugPanel.className = 'panel';
         debugPanel.style.cssText = `
-            position: fixed;
-            right: 20px;
-            top: 20px;
-            width: 300px;
-            background: rgba(10, 10, 30, 0.9);
-            color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            display: none;
-            border: 1px solid rgba(100, 100, 255, 0.3);
+            position: fixed; right: 20px; top: 20px; width: 280px;
+            background: rgba(15, 15, 25, 0.95); color: #ccc;
+            padding: 16px; border-radius: 10px; font-family: monospace;
+            font-size: 12px; display: none; border: 1px solid rgba(100, 120, 180, 0.2);
             backdrop-filter: blur(10px);
         `;
-
         debugPanel.innerHTML = `
-            <h3 style="color: #88aaff; margin-top: 0;">Debug Information</h3>
-            <div id="debug-current-state">Current State: -</div>
+            <div style="color: #7a9fff; font-weight: bold; margin-bottom: 10px;">Debug Info</div>
+            <div id="debug-current-state">State: -</div>
             <div id="debug-input">Input: -</div>
             <div id="debug-position">Position: -</div>
-            <div id="debug-transitions">Available Transitions: -</div>
+            <div id="debug-transitions" style="margin-top: 8px;">Transitions: -</div>
             <div id="debug-stack">Stack: -</div>
             <div id="debug-tape">Tape: -</div>
         `;
-
         document.body.appendChild(debugPanel);
     }
 
     updateDebugInfo() {
         const debugPanel = document.getElementById('debug-panel');
         debugPanel.style.display = this.stepMode ? 'block' : 'none';
-
         if (!this.stepMode) return;
 
-        document.getElementById('debug-current-state').textContent =
-            `Current State: ${this.currentState ? this.currentState.name : '-'} ` +
-            `(Initial: ${this.currentState?.initial ? 'Yes' : 'No'}, ` +
-            `Final: ${this.currentState?.final ? 'Yes' : 'No'})`;
+        document.getElementById('debug-current-state').textContent = `State: ${this.currentState?.name || '-'}`;
+        document.getElementById('debug-input').textContent = `Input: "${this.inputString}"`;
+        document.getElementById('debug-position').textContent = `Position: ${this.inputIndex + 1}/${this.inputString.length}`;
 
-        document.getElementById('debug-input').textContent =
-            `Input: "${this.inputString}" (Length: ${this.inputString.length})`;
-
-        document.getElementById('debug-position').textContent =
-            `Position: ${this.inputIndex + 1}/${this.inputString.length} ` +
-            `(Current symbol: "${this.inputIndex < this.inputString.length ? this.inputString[this.inputIndex] : '-'}")`;
-
-        const availableTransitions = this.automaton.transitions
+        const transitions = this.automaton.transitions
             .filter(t => t.from === this.currentState?.name)
-            .map(t => `${t.from} --${t.input}--> ${t.to}`)
-            .join('\n');
-        document.getElementById('debug-transitions').innerHTML =
-            `Available Transitions:<br><pre style="color: #aaccff;">${availableTransitions || 'None'}</pre>`;
+            .map(t => `${t.input} → ${t.to}`)
+            .join(', ');
+        document.getElementById('debug-transitions').innerHTML = `Transitions: <span style="color: #8899ff;">${transitions || 'None'}</span>`;
 
         if (this.automaton.type === 'pda') {
-            document.getElementById('debug-stack').textContent =
-                `Stack: [${this.stack.join(',')}]`;
+            document.getElementById('debug-stack').textContent = `Stack: [${this.stack.join(',')}]`;
             document.getElementById('debug-stack').style.display = 'block';
             document.getElementById('debug-tape').style.display = 'none';
         } else if (this.automaton.type === 'tm') {
-            document.getElementById('debug-tape').textContent =
-                `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
+            document.getElementById('debug-tape').textContent = `Tape: [${this.tape.join(',')}] @${this.headPosition}`;
             document.getElementById('debug-tape').style.display = 'block';
             document.getElementById('debug-stack').style.display = 'none';
         } else {
@@ -2069,13 +1453,11 @@ class AutomataSimulator {
     }
 }
 
-// Initialize the simulator when page is fully loaded
 window.addEventListener('load', () => {
     try {
         new AutomataSimulator();
     } catch (error) {
-        console.error("Failed to initialize simulator:", error);
+        console.error("Failed to initialize:", error);
         document.getElementById('loading-overlay').style.display = 'none';
-        alert(`Failed to initialize simulator: ${error.message}`);
     }
 });
