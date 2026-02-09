@@ -719,6 +719,7 @@ class AutomataSimulator {
             document.getElementById('tm-controls').style.display = type === 'tm' ? 'block' : 'none';
             document.getElementById('simulation-stack').style.display = type === 'pda' ? 'block' : 'none';
             document.getElementById('simulation-tape').style.display = type === 'tm' ? 'block' : 'none';
+            this.updateSimulationInsights({ type: this.getAutomatonTypeName(type) });
         });
     }
 
@@ -1021,6 +1022,39 @@ class AutomataSimulator {
         this.visualizeAutomaton();
     }
 
+
+    getAutomatonTypeName(type = this.automaton?.type) {
+        return type === 'pda' ? 'Pushdown Automaton' : type === 'tm' ? 'Turing Machine' : 'Finite Automaton';
+    }
+
+    setStatus(message, stateClass = '') {
+        const statusEl = document.getElementById('simulation-status');
+        statusEl.textContent = message;
+        statusEl.classList.remove('accepted', 'rejected', 'running');
+        if (stateClass) statusEl.classList.add(stateClass);
+    }
+
+    updateSimulationInsights(extra = {}) {
+        const typeEl = document.getElementById('insight-type');
+        const stateEl = document.getElementById('insight-state');
+        const progressEl = document.getElementById('insight-progress');
+        const stepsEl = document.getElementById('insight-steps');
+        const progressFill = document.getElementById('progress-fill');
+
+        const typeName = this.getAutomatonTypeName();
+        const currentStateName = this.currentState ? this.currentState.name : '-';
+        const total = this.inputString ? this.inputString.length : 0;
+        const consumed = typeof this.inputIndex === 'number' ? this.inputIndex : 0;
+        const safeTotal = Math.max(1, total);
+        const ratio = Math.min(100, Math.max(0, (consumed / safeTotal) * 100));
+
+        typeEl.textContent = extra.type || typeName;
+        stateEl.textContent = extra.state || currentStateName;
+        progressEl.textContent = `${consumed} / ${total}`;
+        stepsEl.textContent = `${this.simulationStep || 0}`;
+        progressFill.style.width = `${total === 0 ? 0 : ratio}%`;
+    }
+
     createCustomAutomaton() {
         this.clearScene();
 
@@ -1076,13 +1110,13 @@ class AutomataSimulator {
     }
 
     updateInfoDisplay() {
-        const type = this.automaton.type;
         const infoElement = document.getElementById('simulation-info');
-        let typeName = type === 'pda' ? 'Pushdown Automaton' : type === 'tm' ? 'Turing Machine' : 'Finite Automaton';
+        const typeName = this.getAutomatonTypeName(this.automaton.type);
         const stateCount = this.automaton.states.length;
         const acceptingCount = this.automaton.states.filter(s => s.final).length;
         const transitionCount = this.automaton.transitions.length;
         infoElement.innerHTML = `${typeName} with ${stateCount} states (${acceptingCount} accepting) and ${transitionCount} transitions`;
+        this.updateSimulationInsights({ type: typeName });
     }
 
     resetSimulation() {
@@ -1138,7 +1172,8 @@ class AutomataSimulator {
         this.headPosition = 0;
         document.getElementById('simulation-tape').textContent = `Tape: [${this.tape.join(',')}], Head: ${this.headPosition}`;
 
-        document.getElementById('simulation-status').textContent = 'Ready';
+        this.setStatus('Ready');
+        this.updateSimulationInsights();
         document.getElementById('debug-panel').style.display = 'none';
     }
 
@@ -1159,7 +1194,8 @@ class AutomataSimulator {
 
         document.getElementById('step-simulation').disabled = true;
         document.getElementById('run-simulation').disabled = true;
-        document.getElementById('simulation-status').textContent = `Step ${this.simulationStep + 1}`;
+        this.setStatus(`Step ${this.simulationStep + 1}`, 'running');
+        this.updateSimulationInsights();
 
         this.processNextInput();
     }
@@ -1177,7 +1213,8 @@ class AutomataSimulator {
     processFiniteAutomaton() {
         if (this.inputIndex >= this.inputString.length) {
             const isFinalState = this.currentState.final;
-            document.getElementById('simulation-status').textContent = isFinalState ? 'Accepted ✓' : 'Rejected ✗';
+            this.setStatus(isFinalState ? 'Accepted ✓' : 'Rejected ✗', isFinalState ? 'accepted' : 'rejected');
+            this.updateSimulationInsights();
             this.highlightState(this.currentState.name, isFinalState ? this.colors.final : this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
@@ -1186,12 +1223,14 @@ class AutomataSimulator {
         }
 
         const currentInput = this.inputString[this.inputIndex];
-        document.getElementById('simulation-status').textContent = `Processing "${currentInput}" (${this.inputIndex + 1}/${this.inputString.length})`;
+        this.setStatus(`Processing "${currentInput}" (${this.inputIndex + 1}/${this.inputString.length})`, 'running');
+        this.updateSimulationInsights();
 
         const transition = this.automaton.transitions.find(t => t.from === this.currentState.name && t.input === currentInput);
 
         if (!transition) {
-            document.getElementById('simulation-status').textContent = `Rejected: No transition for "${currentInput}"`;
+            this.setStatus(`Rejected: No transition for "${currentInput}"`, 'rejected');
+            this.updateSimulationInsights();
             this.highlightState(this.currentState.name, this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
@@ -1220,6 +1259,7 @@ class AutomataSimulator {
                 this.dataPackets = this.dataPackets.filter(p => p !== packet);
 
                 this.inputIndex++;
+                this.updateSimulationInsights();
 
                 if (this.simulationRunning && !this.stepMode) {
                     setTimeout(() => this.processNextInput(), 200);
@@ -1231,7 +1271,8 @@ class AutomataSimulator {
     processPushdownAutomaton() {
         if (this.inputIndex >= this.inputString.length) {
             const isFinalState = this.currentState.final;
-            document.getElementById('simulation-status').textContent = isFinalState ? 'Accepted ✓' : 'Rejected ✗';
+            this.setStatus(isFinalState ? 'Accepted ✓' : 'Rejected ✗', isFinalState ? 'accepted' : 'rejected');
+            this.updateSimulationInsights();
             this.highlightState(this.currentState.name, isFinalState ? this.colors.final : this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
@@ -1240,7 +1281,8 @@ class AutomataSimulator {
         }
 
         const currentInput = this.inputString[this.inputIndex];
-        document.getElementById('simulation-status').textContent = `Processing "${currentInput}"`;
+        this.setStatus(`Processing "${currentInput}"`, 'running');
+        this.updateSimulationInsights();
 
         let validTransitions = [];
         let epsilonTransitions = [];
@@ -1266,7 +1308,8 @@ class AutomataSimulator {
         const chosenTransition = validTransitions.length > 0 ? validTransitions[0] : epsilonTransitions.length > 0 ? epsilonTransitions[0] : null;
 
         if (!chosenTransition) {
-            document.getElementById('simulation-status').textContent = 'Rejected: No valid transition';
+            this.setStatus('Rejected: No valid transition', 'rejected');
+            this.updateSimulationInsights();
             this.highlightState(this.currentState.name, this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
@@ -1301,6 +1344,7 @@ class AutomataSimulator {
                 this.dataPackets = this.dataPackets.filter(p => p !== packet);
 
                 if (inputConsumed) this.inputIndex++;
+                this.updateSimulationInsights();
 
                 if (this.simulationRunning && !this.stepMode) {
                     setTimeout(() => this.processNextInput(), 200);
@@ -1311,7 +1355,8 @@ class AutomataSimulator {
 
     processTuringMachine() {
         if (this.currentState.final) {
-            document.getElementById('simulation-status').textContent = 'Accepted ✓';
+            this.setStatus('Accepted ✓', 'accepted');
+            this.updateSimulationInsights();
             this.highlightState(this.currentState.name, this.colors.final, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
@@ -1320,12 +1365,14 @@ class AutomataSimulator {
         }
 
         const currentSymbol = this.headPosition < this.tape.length ? this.tape[this.headPosition] : '_';
-        document.getElementById('simulation-status').textContent = `Processing "${currentSymbol}" at position ${this.headPosition}`;
+        this.setStatus(`Processing "${currentSymbol}" at position ${this.headPosition}`, 'running');
+        this.updateSimulationInsights();
 
         const transition = this.automaton.transitions.find(t => t.from === this.currentState.name && t.input.startsWith(`${currentSymbol}→`));
 
         if (!transition) {
-            document.getElementById('simulation-status').textContent = `Halted: No transition for "${currentSymbol}"`;
+            this.setStatus(`Halted: No transition for "${currentSymbol}"`, 'rejected');
+            this.updateSimulationInsights();
             this.highlightState(this.currentState.name, this.colors.error, 0.4);
             this.simulationRunning = false;
             document.getElementById('step-simulation').disabled = false;
@@ -1362,6 +1409,7 @@ class AutomataSimulator {
                     if (idx > -1) this.particleSystems.splice(idx, 1);
                 }
                 this.dataPackets = this.dataPackets.filter(p => p !== packet);
+                this.updateSimulationInsights();
 
                 if (this.simulationRunning && !this.stepMode) {
                     setTimeout(() => this.processNextInput(), 200);

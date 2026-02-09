@@ -22,6 +22,16 @@
         <div class="legend-item"><div class="legend-color" style="background-color: #FFC107;"></div>Current State</div>
         <div class="legend-item"><div class="legend-color" style="background-color: #FF5252;"></div>Error/Rejection</div>
     </div>
+
+    <div id="insights-panel" class="panel">
+        <h3>Simulation Insights</h3>
+        <div class="insight-grid">
+            <div class="insight-card"><span class="label">Automaton</span><strong id="insight-type">Finite Automaton</strong></div>
+            <div class="insight-card"><span class="label">Current State</span><strong id="insight-state">q0</strong></div>
+            <div class="insight-card"><span class="label">Input Progress</span><strong id="insight-progress">0 / 0</strong></div>
+            <div class="insight-card"><span class="label">Step Count</span><strong id="insight-steps">0</strong></div>
+        </div>
+    </div>
     
     <div id="top-buttons">
         <button id="show-examples" class="primary">Example Automata</button>
@@ -172,6 +182,7 @@
             <label for="speed-slider">Speed:</label>
             <input type="range" id="speed-slider" min="1" max="5" value="3">
         </div>
+        <div id="progress-track"><div id="progress-fill"></div></div>
         <div id="simulation-status">Ready</div>
         <div id="simulation-info"></div>
         <div id="simulation-stack" style="display: none;">Stack: []</div>

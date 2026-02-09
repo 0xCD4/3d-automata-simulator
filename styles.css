@@ -53,6 +53,34 @@ body {
     padding: 15px;
     border-radius: 8px;
 }
+#insights-panel {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: 14px;
+    width: min(420px, 42vw);
+}
+.insight-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.insight-card {
+    background: rgba(60, 80, 130, 0.25);
+    border: 1px solid rgba(120, 150, 255, 0.3);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+.insight-card .label {
+    font-size: 0.78rem;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+.insight-card strong {
+    color: #d0ebff;
+}
 #top-buttons {
     position: absolute;
     top: 10px;
@@ -166,6 +194,24 @@ code {
     margin-top: 10px;
     font-weight: bold;
 }
+#simulation-status.accepted { color: #66e6a6; }
+#simulation-status.rejected { color: #ff8787; }
+#simulation-status.running { color: #ffd66b; }
+#progress-track {
+    margin-top: 10px;
+    width: 100%;
+    height: 8px;
+    background: rgba(35, 35, 55, 0.8);
+    border-radius: 99px;
+    overflow: hidden;
+    border: 1px solid rgba(120, 120, 180, 0.3);
+}
+#progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #4c6ef5, #66d9e8, #69db7c);
+    transition: width 0.25s ease;
+}
 #simulation-info {
     margin-top: 5px;
     font-style: italic;
@@ -277,6 +323,24 @@ label {
 .prev-step {
     background: #6c757d;
     color: white;
+}
+
+@media (max-width: 900px) {
+    #insights-panel {
+        left: 10px;
+        right: auto;
+        bottom: 155px;
+        width: min(360px, 90vw);
+    }
+    #legend {
+        top: auto;
+        bottom: 10px;
+        left: 50%;
+        width: max-content;
+        max-width: calc(100vw - 20px);
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }
 #animation-speed {
     display: flex;
